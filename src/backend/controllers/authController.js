@@ -115,6 +115,8 @@ exports.register = async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
+        name: user.name,
+        user_type: user.user_type,
         stellar_public_key: user.stellar_public_key
       }
     });
@@ -158,9 +160,12 @@ exports.login = async (req, res) => {
     res.status(200).json({
       message: 'Login successful',
       token,
+      userType: user.user_type,
       user: {
         id: user.id,
         email: user.email,
+        name: user.name,
+        user_type: user.user_type,
         stellar_public_key: user.stellar_public_key
       }
     });

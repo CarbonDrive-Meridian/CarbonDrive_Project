@@ -30,6 +30,36 @@ const Profile = () => {
   // Carregar dados do perfil ao montar o componente
   useEffect(() => {
     const loadProfile = async () => {
+      // Verificar se há token antes de fazer a requisição
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        toast({
+          title: "Acesso negado",
+          description: "Você precisa estar logado para acessar o perfil.",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
+
+      // Tentar carregar dados do localStorage primeiro
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setProfile(userData);
+          setFormData({
+            name: userData.name || "",
+            pix_key: userData.pix_key || "",
+          });
+          setIsLoadingProfile(false);
+          return; // Se temos dados no localStorage, não precisamos fazer requisição
+        } catch (error) {
+          console.error("Erro ao carregar dados do localStorage:", error);
+          // Se houver erro, continua com a requisição à API
+        }
+      }
+
       try {
         const response = await api.get('/auth/profile');
         const userData = response.data;
@@ -39,17 +69,35 @@ const Profile = () => {
           name: userData.name || "",
           pix_key: userData.pix_key || "",
         });
+        
+        // Atualizar localStorage com dados mais recentes
+        localStorage.setItem('user', JSON.stringify(userData));
       } catch (error: any) {
         console.error("Erro ao carregar perfil:", error);
-        toast({
-          title: "Erro ao carregar perfil",
-          description: "Não foi possível carregar os dados do perfil.",
-          variant: "destructive",
-        });
         
-        // Se não conseguir carregar o perfil, redirecionar para login
+        // Tratamento específico para diferentes tipos de erro
         if (error.response?.status === 401) {
+          toast({
+            title: "Sessão expirada",
+            description: "Sua sessão expirou. Faça login novamente.",
+            variant: "destructive",
+          });
+          localStorage.removeItem('jwt');
+          localStorage.removeItem('user');
           navigate('/login');
+        } else if (error.response?.status === 404) {
+          toast({
+            title: "Usuário não encontrado",
+            description: "Perfil não encontrado. Tente fazer login novamente.",
+            variant: "destructive",
+          });
+          navigate('/login');
+        } else {
+          toast({
+            title: "Erro ao carregar perfil",
+            description: error.response?.data?.error || "Não foi possível carregar os dados do perfil.",
+            variant: "destructive",
+          });
         }
       } finally {
         setIsLoadingProfile(false);
@@ -71,6 +119,19 @@ const Profile = () => {
     e.preventDefault();
     setIsLoading(true);
 
+    // Verificar se há token antes de fazer a requisição
+    const token = localStorage.getItem('jwt');
+    if (!token) {
+      toast({
+        title: "Acesso negado",
+        description: "Você precisa estar logado para salvar alterações.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await api.put('/auth/profile', {
         name: formData.name,
@@ -80,6 +141,9 @@ const Profile = () => {
       // Atualizar estado local com dados retornados
       setProfile(response.data.user);
       
+      // Atualizar localStorage com dados mais recentes
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      
       toast({
         title: "Perfil atualizado!",
         description: "Suas informações foram salvas com sucesso.",
@@ -87,12 +151,43 @@ const Profile = () => {
 
     } catch (error: any) {
       console.error("Erro ao atualizar perfil:", error);
-      const errorMessage = error.response?.data?.error || "Erro ao atualizar perfil. Tente novamente.";
-      toast({
-        title: "Erro ao salvar",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      
+      // Tratamento específico para diferentes tipos de erro
+      if (error.response?.status === 401) {
+        toast({
+          title: "Sessão expirada",
+          description: "Sua sessão expirou. Faça login novamente.",
+          variant: "destructive",
+        });
+        localStorage.removeItem('jwt');
+        navigate('/login');
+      } else if (error.response?.status === 404) {
+        toast({
+          title: "Usuário não encontrado",
+          description: "Perfil não encontrado. Tente fazer login novamente.",
+          variant: "destructive",
+        });
+        navigate('/login');
+      } else if (error.response?.status === 400) {
+        toast({
+          title: "Dados inválidos",
+          description: error.response?.data?.error || "Verifique os dados informados.",
+          variant: "destructive",
+        });
+      } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+        toast({
+          title: "Erro de conexão",
+          description: "Verifique sua conexão com a internet e tente novamente.",
+          variant: "destructive",
+        });
+      } else {
+        const errorMessage = error.response?.data?.error || "Erro ao atualizar perfil. Tente novamente.";
+        toast({
+          title: "Erro ao salvar",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

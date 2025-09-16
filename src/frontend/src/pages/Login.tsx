@@ -5,45 +5,49 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Leaf, Mail, Lock } from "lucide-react";
-import api from "@/services/api"; // Mantenha a sua importação
-import { useToast } from "@/hooks/use-toast"; // Adicione o useToast
+import api from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { toast } = useToast(); // Adicione o hook
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-  const [isLoading, setIsLoading] = useState(false); // Adicione o estado de carregamento
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true); // Inicia o carregamento
+    setIsLoading(true);
 
     try {
-      // Usa a sua chamada de API para a rota de login
-      const response = await api.post('/login', formData);
+      const response = await api.post('/auth/login', formData);
       
-      const { token, userType } = response.data;
+      const { token, userType, name, user } = response.data;
       
-      localStorage.setItem('jwt', token);
+      localStorage.setItem('userName', name);
       
-      // Mensagem de sucesso
+      // Salvar dados do usuário no localStorage para acesso imediato
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      }
+      
       toast({
         title: "Login realizado com sucesso!",
         description: "Você será redirecionado em instantes.",
       });
 
       // Redireciona o usuário
-      if (userType === 'Motorista') {
+      if (userType === 'driver') {
         navigate('/dashboard');
-      } else if (userType === 'Empresa') {
+      } else if (userType === 'company') {
         navigate('/admin');
+      } else {
+        navigate('/dashboard');
       }
       
     } catch (error: any) {
-      // Lida com erros de autenticação
       console.error("Erro no login:", error);
       const errorMessage = error.response?.data?.message || "Erro ao fazer login. Tente novamente.";
       toast({
@@ -52,7 +56,7 @@ const Login = () => {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false); // Finaliza o carregamento
+      setIsLoading(false);
     }
   };
 

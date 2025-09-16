@@ -32,6 +32,7 @@ api.interceptors.response.use(
     // Se o token estiver expirado ou a requisição for 401, remove o token e redireciona
     if (error.response?.status === 401) {
       localStorage.removeItem('jwt');
+      localStorage.removeItem('user'); // Remover dados do usuário também
       // Em uma aplicação real, você usaria um router para redirecionar
       window.location.href = '/login';
     }

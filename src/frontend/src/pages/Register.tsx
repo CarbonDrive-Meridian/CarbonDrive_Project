@@ -68,8 +68,13 @@ const Register = () => {
         user_type: formData.user_type,
       });
 
-      const { token } = response.data;
+      const { token, user } = response.data;
       localStorage.setItem('jwt', token);
+      
+      // Salvar dados do usuário no localStorage para acesso imediato
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      }
 
       toast({
         title: "Cadastro realizado com sucesso!",

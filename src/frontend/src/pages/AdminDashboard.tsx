@@ -8,7 +8,7 @@ import api from '@/services/api'; // Importa a instância do Axios que criamos
 
 const AdminDashboard = () => {
   const { toast } = useToast();
-  const [inventoryBalance, setInventoryBalance] = useState(1500);
+  const [inventoryBalance, setInventoryBalance] = useState(0);
   const [purchaseQuantity, setPurchaseQuantity] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
   // State for dynamic dollar exchange rate
@@ -19,16 +19,34 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchDollarRate = async () => {
       try {
-        const response = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
+        const response = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+          signal: AbortSignal.timeout(10000) // 10 second timeout
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         if (data.USDBRL && data.USDBRL.bid) {
           const rate = parseFloat(data.USDBRL.bid);
           setDollarRate(rate);
           setCdriveToBrlcRate(rate * 0.05); // 1 $CDRIVE = 0.05 USD = (rate * 0.05) BRL
+        } else {
+          // Use default values if API response is invalid
+          console.warn('API response invalid, using default values');
+          setDollarRate(5.50); // Default BRL/USD rate
+          setCdriveToBrlcRate(0.275); // 5.50 * 0.05
         }
       } catch (error) {
         console.warn('Error fetching dollar exchange rate:', error);
-        // Keep default values in case of error
+        // Use default values in case of error
+        setDollarRate(5.50); // Default BRL/USD rate
+        setCdriveToBrlcRate(0.275); // 5.50 * 0.05
       }
     };
     
