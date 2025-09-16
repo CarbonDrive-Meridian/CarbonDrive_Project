@@ -1,269 +1,350 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Leaf, 
-  DollarSign, 
-  TrendingUp, 
-  Zap,
-  User,
-  ChevronDown,
-  Clock,
-  Bolt,
-  Car
-} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Leaf, Mail, Lock, User, CreditCard, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
+import api from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
-import api from "@/services/api"; // Mantenha a sua importação
 
-const Dashboard = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  // Estado para dados vindos da API
-  const [driverBalance, setDriverBalance] = useState(247.5);
-  const [dailyEarnings] = useState(15.5);
-  const [isJourneyActive, setIsJourneyActive] = useState(false);
-  const [sessionData, setSessionData] = useState({
-    carbonSaved: 0,
-    sessionTokens: 0,
-    kilometersDriven: 0,
-  });
+const Register = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    user_type: "",
+    pix_key: "",
+  });
 
-  // Cotação: 1 $CDRIVE = R$ 0.20 (Exemplo B2C)
-  const cdriveToBrlcRate = 0.20;
+  // Validações de senha
+  const passwordValidations = {
+    maxLength: formData.password.length <= 8,
+    minLength: formData.password.length >= 4,
+    hasUpperCase: /[A-Z]/.test(formData.password),
+    hasLowerCase: /[a-z]/.test(formData.password),
+    hasNumber: /\d/.test(formData.password),
+    passwordsMatch: formData.password === formData.confirmPassword && formData.confirmPassword !== "",
+  };
 
-  // Transações de exemplo, serão substituídas por dados reais da API
-  const [transactions] = useState([
-    { id: 1, date: "15/09/2024", time: "14:30", description: "Eco-condução - Rota Centro", amount: 8.5 },
-    { id: 2, date: "15/09/2024", time: "12:15", description: "Eco-condução - Rota Norte", amount: 7.0 },
-    { id: 3, date: "14/09/2024", time: "18:45", description: "Troca PIX", amount: -50.0 },
-    { id: 4, date: "14/09/2024", time: "16:20", description: "Eco-condução - Rota Sul", amount: 9.2 },
-  ]);
+  const isPasswordValid = Object.values(passwordValidations).every(Boolean);
 
-  const handleEcoSimulation = async () => {
-    // Obter o token de autenticação
-    const token = localStorage.getItem('jwt');
-    if (!token) {
-      toast({
-        title: "Erro de autenticação",
-        description: "Você precisa estar logado para iniciar uma jornada.",
-        variant: "destructive",
-      });
-      navigate('/login'); // Redireciona para o login se não houver token
-      return;
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-    if (!isJourneyActive) {
-      // INICIAR a jornada
-      setIsJourneyActive(true);
-      toast({
-        title: "Jornada Iniciada!",
-        description: "Agora estamos monitorando sua condução.",
-      });
-    } else {
-      // FINALIZAR a jornada e chamar a API para calcular ganhos
-      try {
-        const response = await api.post(
-          `/motorista/eco-conducao`,
-          {},
-        );
+    // Validações do frontend
+    if (!isPasswordValid) {
+      toast({
+        title: "Senha inválida",
+        description: "Por favor, atenda a todos os requisitos de senha.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
 
-        const { carbonSaved, sessionTokens, kilometersDriven } = response.data;
+    if (!formData.user_type) {
+      toast({
+        title: "Tipo de usuário obrigatório",
+        description: "Por favor, selecione se você é motorista ou empresa.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
 
-        // Atualiza os estados com dados reais da API
-        setDriverBalance(prev => prev + sessionTokens);
-        setSessionData({ carbonSaved, sessionTokens, kilometersDriven });
-        setIsJourneyActive(false);
+    try {
+      const response = await api.post('/auth/register', {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        user_type: formData.user_type,
+        pix_key: formData.pix_key,
+      });
 
-        toast({
-          title: "Jornada Finalizada!",
-          description: `Você economizou ${carbonSaved.toFixed(2)} kg de carbono e ganhou ${sessionTokens.toFixed(2)} $CDRIVE.`,
-        });
+      const { token } = response.data;
+      localStorage.setItem('jwt', token);
 
-      } catch (error) {
-        console.error("Erro ao finalizar jornada:", error);
-        toast({
-          title: "Erro na Jornada",
-          description: "Não foi possível calcular seus ganhos. Tente novamente.",
-          variant: "destructive",
-        });
-        setIsJourneyActive(false);
-      }
-    }
-  };
+      toast({
+        title: "Cadastro realizado com sucesso!",
+        description: "Bem-vindo ao CarbonDrive! Você será redirecionado em instantes.",
+      });
 
-  const handlePixExchange = async () => {
-    try {
-      const response = await api.post(
-        `/motorista/trocar-cdr-por-pix`,
-        { amount: driverBalance }, // Ou o valor específico que o usuário deseja trocar
-      );
+      // Redireciona baseado no tipo de usuário
+      if (formData.user_type === 'driver') {
+        navigate('/dashboard');
+      } else if (formData.user_type === 'company') {
+        navigate('/admin');
+      }
 
-      // Atualizar o saldo local (em uma aplicação real, você buscaria do servidor)
-      setDriverBalance(response.data.newBalance);
+    } catch (error: any) {
+      console.error("Erro no cadastro:", error);
+      const errorMessage = error.response?.data?.error || "Erro ao criar conta. Tente novamente.";
+      toast({
+        title: "Erro no Cadastro",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      toast({
-        title: "Troca Realizada!",
-        description: `R$ ${response.data.pixValue.toFixed(2)} foi enviado para sua chave PIX`,
-      });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-    } catch (error: any) {
-      console.error("Erro na troca PIX:", error);
-      const errorMessage = error.response?.data?.error || "Erro na transação. Tente novamente.";
-      toast({
-        title: "Erro na Troca",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
-  };
+  const handleSelectChange = (value: string) => {
+    setFormData({
+      ...formData,
+      user_type: value,
+    });
+  };
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary p-2 rounded-lg">
-              <Leaf className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold gradient-text">CarbonDrive</h1>
-              <p className="text-sm text-muted-foreground">Condução Sustentável</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <User className="h-5 w-5 text-muted-foreground" />
-              <span className="font-medium">João Silva</span>
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </div>
-        </div>
-      </header>
+  const ValidationIcon = ({ isValid }: { isValid: boolean }) => (
+    isValid ? (
+      <CheckCircle className="h-4 w-4 text-green-500" />
+    ) : (
+      <AlertCircle className="h-4 w-4 text-red-500" />
+    )
+  );
 
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
-        {/* Balance Panel */}
-        <Card className="bg-primary text-primary-foreground overflow-hidden">
-          <CardContent className="p-8">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <p className="text-primary-foreground/80 text-sm mb-2">Acumule tokens</p>
-                <div className="space-y-2">
-                  <div className="text-4xl font-bold">
-                    {driverBalance.toFixed(1)} $CDRIVE
-                  </div>
-                  <div className="text-primary-foreground/90 text-lg">
-                    = R$ {(driverBalance * cdriveToBrlcRate).toFixed(2)}
-                  </div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="flex items-center gap-1 text-accent">
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="font-semibold">+{dailyEarnings.toFixed(1)} hoje</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-8">
+        {/* Logo/Brand */}
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="bg-primary p-3 rounded-xl">
+              <Leaf className="h-8 w-8 text-primary-foreground" />
+            </div>
+            <h1 className="text-3xl font-bold gradient-text">CarbonDrive</h1>
+          </div>
+          <p className="text-muted-foreground">
+            Junte-se à revolução da condução sustentável
+          </p>
+        </div>
 
-        {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Button 
-            onClick={handleEcoSimulation}
-            variant="eco" 
-            size="eco" 
-            className="h-16 text-lg"
-          >
-            <Zap className="h-6 w-6" />
-            {isJourneyActive ? "Finalizar Jornada" : "Iniciar Jornada Ecológica"}
-          </Button>
-          
-          <Button 
-            onClick={handlePixExchange}
-            variant="secondary" 
-            size="eco" 
-            className="h-16 text-lg"
-          >
-            <DollarSign className="h-6 w-6" />
-            Trocar por Reais (Pix)
-          </Button>
-        </div>
+        {/* Register Form */}
+        <Card className="carbon-card">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl">Criar Conta</CardTitle>
+            <CardDescription>
+              Comece a ganhar recompensas por dirigir de forma sustentável
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Nome Completo
+                </Label>
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="Digite seu nome completo"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  className="h-12"
+                />
+              </div>
 
-        {/* Resumo da Jornada (condicional) */}
-        {isJourneyActive ? (
-          <div className="flex items-center justify-center p-6 bg-green-100 rounded-lg shadow-inner">
-            <Bolt className="h-6 w-6 text-green-600 mr-3 animate-pulse" />
-            <span className="text-green-800 text-lg font-medium">Sua jornada está ativa... Dirija ecologicamente!</span>
-          </div>
-        ) : (
-          (sessionData.sessionTokens > 0) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-bold text-accent">Resumo da sua Jornada</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <p className="text-muted-foreground flex items-center gap-2">
-                    <Leaf className="h-5 w-5 text-green-500" /> Carbono Economizado
-                  </p>
-                  <p className="text-3xl font-bold">{sessionData.carbonSaved.toFixed(2)} kg</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-muted-foreground flex items-center gap-2">
-                    <Car className="h-5 w-5 text-blue-500" /> KM Percorridos
-                  </p>
-                  <p className="text-3xl font-bold">{sessionData.kilometersDriven.toFixed(1)} km</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-muted-foreground flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-yellow-500" /> $CDRIVE Ganhos
-                  </p>
-                  <p className="text-3xl font-bold text-accent">{sessionData.sessionTokens.toFixed(2)}</p>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        )}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  E-mail
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="Digite seu e-mail"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="h-12"
+                />
+              </div>
 
-        {/* Transaction History */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Histórico de Transações
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {transactions.map((transaction) => (
-                <div key={transaction.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4">
-                      <div className="text-sm text-muted-foreground">
-                        {transaction.date} • {transaction.time}
-                      </div>
-                  </div>
-                  <div className="font-medium mt-1">
-                      {transaction.description}
-                    </div>
-                </div>
-                <div className={`font-bold text-lg ${
-                    transaction.amount > 0 ? 'text-accent' : 'text-destructive'
-                  }`}>
-                    {transaction.amount > 0 ? '+' : ''}{transaction.amount.toFixed(1)} $CDRIVE
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </main>
-    </div>
-  );
+              <div className="space-y-2">
+                <Label htmlFor="user_type" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Tipo de Usuário
+                </Label>
+                <Select onValueChange={handleSelectChange} required>
+                  <SelectTrigger className="h-12">
+                    <SelectValue placeholder="Selecione o tipo de usuário" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="driver">Motorista</SelectItem>
+                    <SelectItem value="company">Empresa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="pix_key" className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Chave PIX (opcional)
+                </Label>
+                <Input
+                  id="pix_key"
+                  name="pix_key"
+                  type="text"
+                  placeholder="Digite sua chave PIX"
+                  value={formData.pix_key}
+                  onChange={handleChange}
+                  className="h-12"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  Senha
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Digite sua senha"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className="h-12 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Validações de senha */}
+                 {formData.password && (
+                   <div className="space-y-2 mt-3 p-3 bg-muted/30 rounded-lg">
+                     <p className="text-sm font-medium text-muted-foreground">Requisitos da senha:</p>
+                     <div className="space-y-1">
+                       <div className="flex items-center gap-2 text-sm">
+                         <ValidationIcon isValid={passwordValidations.minLength} />
+                         <span className={passwordValidations.minLength ? "text-green-600" : "text-red-600"}>
+                           Mínimo 4 caracteres
+                         </span>
+                       </div>
+                       <div className="flex items-center gap-2 text-sm">
+                         <ValidationIcon isValid={passwordValidations.maxLength} />
+                         <span className={passwordValidations.maxLength ? "text-green-600" : "text-red-600"}>
+                           Máximo 8 caracteres
+                         </span>
+                       </div>
+                       <div className="flex items-center gap-2 text-sm">
+                         <ValidationIcon isValid={passwordValidations.hasUpperCase} />
+                         <span className={passwordValidations.hasUpperCase ? "text-green-600" : "text-red-600"}>
+                           Pelo menos uma letra maiúscula
+                         </span>
+                       </div>
+                       <div className="flex items-center gap-2 text-sm">
+                         <ValidationIcon isValid={passwordValidations.hasLowerCase} />
+                         <span className={passwordValidations.hasLowerCase ? "text-green-600" : "text-red-600"}>
+                           Pelo menos uma letra minúscula
+                         </span>
+                       </div>
+                       <div className="flex items-center gap-2 text-sm">
+                         <ValidationIcon isValid={passwordValidations.hasNumber} />
+                         <span className={passwordValidations.hasNumber ? "text-green-600" : "text-red-600"}>
+                           Pelo menos um número (0-9)
+                         </span>
+                       </div>
+                     </div>
+                   </div>
+                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  Confirmar Senha
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirme sua senha"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    required
+                    className="h-12 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                </div>
+
+                {/* Validação de confirmação de senha */}
+                {formData.confirmPassword && (
+                  <div className="flex items-center gap-2 text-sm mt-2">
+                    <ValidationIcon isValid={passwordValidations.passwordsMatch} />
+                    <span className={passwordValidations.passwordsMatch ? "text-green-600" : "text-red-600"}>
+                      {passwordValidations.passwordsMatch ? "Senhas coincidem" : "Senhas não coincidem"}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                variant="carbon"
+                size="eco"
+                className="w-full"
+                disabled={isLoading || !isPasswordValid}
+              >
+                {isLoading ? "Criando conta..." : "Criar Conta"}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Já tem uma conta?{" "}
+                <Link to="/login" className="text-accent hover:text-accent/90 font-medium">
+                  Faça login
+                </Link>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 };
 
-export default Dashboard;
-resolva os conflitos
+export default Register;

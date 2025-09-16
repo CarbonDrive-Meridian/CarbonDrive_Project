@@ -19,7 +19,7 @@ const User = sequelize.define('User', {
   },
   pix_key: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   stellar_public_key: {
     type: DataTypes.STRING,
