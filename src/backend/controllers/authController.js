@@ -1,8 +1,7 @@
-
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const StellarSdk = require('stellar-sdk');
-const { Server, Keypair, TransactionBuilder, Operation, Asset } = require('@stellar/stellar-sdk'); // Use the new package and destructure classes directly
+const StellarSdk = require('@stellar/stellar-sdk');
+const { Keypair, TransactionBuilder, Operation, Asset, Networks } = StellarSdk;
 const User = require('../models/user');
 const crypto = require('crypto');
 
@@ -34,7 +33,7 @@ function decrypt(encryptedData) {
 }
 
 // --- Stellar Configuration ---
-const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
+const server = new StellarSdk.Horizon.Server('https://horizon-testnet.stellar.org');
 const adminKeypair = Keypair.fromSecret(process.env.CHAVE_PRIVADA_ADMIN);
 
 // --- Controller ---
