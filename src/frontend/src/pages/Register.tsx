@@ -1,171 +1,269 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // Importe useNavigate
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Leaf, User, Mail, Lock } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import api from "@/services/api"; // Importe a instância do Axios
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Leaf, 
+  DollarSign, 
+  TrendingUp, 
+  Zap,
+  User,
+  ChevronDown,
+  Clock,
+  Bolt,
+  Car
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import api from "@/services/api"; // Mantenha a sua importação
 
-const Register = () => {
-  const navigate = useNavigate(); // Hook para redirecionar o usuário
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    userType: "Motorista", // Novo estado para o tipo de usuário
-  });
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  // Estado para dados vindos da API
+  const [driverBalance, setDriverBalance] = useState(247.5);
+  const [dailyEarnings] = useState(15.5);
+  const [isJourneyActive, setIsJourneyActive] = useState(false);
+  const [sessionData, setSessionData] = useState({
+    carbonSaved: 0,
+    sessionTokens: 0,
+    kilometersDriven: 0,
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Cotação: 1 $CDRIVE = R$ 0.20 (Exemplo B2C)
+  const cdriveToBrlcRate = 0.20;
 
-    try {
-      // Faz a chamada para a rota de cadastro do backend
-      // A rota não exige autenticação, então não precisamos de token
-      const response = await api.post("/register", { ...formData });
+  // Transações de exemplo, serão substituídas por dados reais da API
+  const [transactions] = useState([
+    { id: 1, date: "15/09/2024", time: "14:30", description: "Eco-condução - Rota Centro", amount: 8.5 },
+    { id: 2, date: "15/09/2024", time: "12:15", description: "Eco-condução - Rota Norte", amount: 7.0 },
+    { id: 3, date: "14/09/2024", time: "18:45", description: "Troca PIX", amount: -50.0 },
+    { id: 4, date: "14/09/2024", time: "16:20", description: "Eco-condução - Rota Sul", amount: 9.2 },
+  ]);
 
-      if (response.status === 201) {
-        // Se o cadastro for bem-sucedido, redireciona para a página de login
-        navigate("/login");
-      }
-    } catch (error) {
-      console.error("Registration failed:", error);
-      // Aqui você pode adicionar um toast de erro para o usuário
-    }
-  };
+  const handleEcoSimulation = async () => {
+    // Obter o token de autenticação
+    const token = localStorage.getItem('jwt');
+    if (!token) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para iniciar uma jornada.",
+        variant: "destructive",
+      });
+      navigate('/login'); // Redireciona para o login se não houver token
+      return;
+    }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+    if (!isJourneyActive) {
+      // INICIAR a jornada
+      setIsJourneyActive(true);
+      toast({
+        title: "Jornada Iniciada!",
+        description: "Agora estamos monitorando sua condução.",
+      });
+    } else {
+      // FINALIZAR a jornada e chamar a API para calcular ganhos
+      try {
+        const response = await api.post(
+          `/motorista/eco-conducao`,
+          {},
+        );
 
-  const handleUserTypeChange = (value: string) => {
-    setFormData({
-      ...formData,
-      userType: value,
-    });
-  };
+        const { carbonSaved, sessionTokens, kilometersDriven } = response.data;
 
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        {/* Logo/Brand */}
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="bg-primary p-3 rounded-xl">
-              <Leaf className="h-8 w-8 text-primary-foreground" />
-            </div>
-            <h1 className="text-3xl font-bold gradient-text">CarbonDrive</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Dirija sustentável, ganhe recompensas
-          </p>
-        </div>
+        // Atualiza os estados com dados reais da API
+        setDriverBalance(prev => prev + sessionTokens);
+        setSessionData({ carbonSaved, sessionTokens, kilometersDriven });
+        setIsJourneyActive(false);
 
-        {/* Registration Form */}
-        <Card className="carbon-card">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Cadastre-se para Ganhar</CardTitle>
-            <CardDescription>
-              Crie sua conta e comece a ser recompensado por dirigir de forma eco-responsável
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Opção de Tipo de Usuário */}
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  Tipo de Usuário
-                </Label>
-                <RadioGroup
-                  defaultValue="Motorista"
-                  onValueChange={handleUserTypeChange}
-                  className="flex items-center justify-around w-full h-12 rounded-lg border px-4 py-2"
-                >
-                  <div className="flex items-center space-x-2 cursor-pointer">
-                    <RadioGroupItem value="Motorista" id="driver" />
-                    <Label htmlFor="driver" className="cursor-pointer">Motorista</Label>
-                  </div>
-                  <div className="flex items-center space-x-2 cursor-pointer">
-                    <RadioGroupItem value="Empresa" id="company" />
-                    <Label htmlFor="company" className="cursor-pointer">Empresa</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="name" className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Nome Completo
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder="Digite seu nome completo"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="h-12"
-                />
-              </div>
+        toast({
+          title: "Jornada Finalizada!",
+          description: `Você economizou ${carbonSaved.toFixed(2)} kg de carbono e ganhou ${sessionTokens.toFixed(2)} $CDRIVE.`,
+        });
 
-              <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  E-mail
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Digite seu e-mail"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="h-12"
-                />
-              </div>
+      } catch (error) {
+        console.error("Erro ao finalizar jornada:", error);
+        toast({
+          title: "Erro na Jornada",
+          description: "Não foi possível calcular seus ganhos. Tente novamente.",
+          variant: "destructive",
+        });
+        setIsJourneyActive(false);
+      }
+    }
+  };
 
-              <div className="space-y-2">
-                <Label htmlFor="password" className="flex items-center gap-2">
-                  <Lock className="h-4 w-4" />
-                  Senha
-                </Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Crie uma senha segura"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  className="h-12"
-                />
-              </div>
-              {/* O campo Chave PIX foi removido */}
+  const handlePixExchange = async () => {
+    try {
+      const response = await api.post(
+        `/motorista/trocar-cdr-por-pix`,
+        { amount: driverBalance }, // Ou o valor específico que o usuário deseja trocar
+      );
 
-              <Button type="submit" variant="carbon" size="eco" className="w-full">
-                Criar Conta
-              </Button>
-            </form>
+      // Atualizar o saldo local (em uma aplicação real, você buscaria do servidor)
+      setDriverBalance(response.data.newBalance);
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                Já tem uma conta?{" "}
-                <Link to="/login" className="text-accent hover:text-accent/90 font-medium">
-                  Fazer Login
-                </Link>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
+      toast({
+        title: "Troca Realizada!",
+        description: `R$ ${response.data.pixValue.toFixed(2)} foi enviado para sua chave PIX`,
+      });
+
+    } catch (error: any) {
+      console.error("Erro na troca PIX:", error);
+      const errorMessage = error.response?.data?.error || "Erro na transação. Tente novamente.";
+      toast({
+        title: "Erro na Troca",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b bg-card px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-primary p-2 rounded-lg">
+              <Leaf className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold gradient-text">CarbonDrive</h1>
+              <p className="text-sm text-muted-foreground">Condução Sustentável</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5 text-muted-foreground" />
+              <span className="font-medium">João Silva</span>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+        {/* Balance Panel */}
+        <Card className="bg-primary text-primary-foreground overflow-hidden">
+          <CardContent className="p-8">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <p className="text-primary-foreground/80 text-sm mb-2">Acumule tokens</p>
+                <div className="space-y-2">
+                  <div className="text-4xl font-bold">
+                    {driverBalance.toFixed(1)} $CDRIVE
+                  </div>
+                  <div className="text-primary-foreground/90 text-lg">
+                    = R$ {(driverBalance * cdriveToBrlcRate).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="flex items-center gap-1 text-accent">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="font-semibold">+{dailyEarnings.toFixed(1)} hoje</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Button 
+            onClick={handleEcoSimulation}
+            variant="eco" 
+            size="eco" 
+            className="h-16 text-lg"
+          >
+            <Zap className="h-6 w-6" />
+            {isJourneyActive ? "Finalizar Jornada" : "Iniciar Jornada Ecológica"}
+          </Button>
+          
+          <Button 
+            onClick={handlePixExchange}
+            variant="secondary" 
+            size="eco" 
+            className="h-16 text-lg"
+          >
+            <DollarSign className="h-6 w-6" />
+            Trocar por Reais (Pix)
+          </Button>
+        </div>
+
+        {/* Resumo da Jornada (condicional) */}
+        {isJourneyActive ? (
+          <div className="flex items-center justify-center p-6 bg-green-100 rounded-lg shadow-inner">
+            <Bolt className="h-6 w-6 text-green-600 mr-3 animate-pulse" />
+            <span className="text-green-800 text-lg font-medium">Sua jornada está ativa... Dirija ecologicamente!</span>
+          </div>
+        ) : (
+          (sessionData.sessionTokens > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl font-bold text-accent">Resumo da sua Jornada</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <p className="text-muted-foreground flex items-center gap-2">
+                    <Leaf className="h-5 w-5 text-green-500" /> Carbono Economizado
+                  </p>
+                  <p className="text-3xl font-bold">{sessionData.carbonSaved.toFixed(2)} kg</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground flex items-center gap-2">
+                    <Car className="h-5 w-5 text-blue-500" /> KM Percorridos
+                  </p>
+                  <p className="text-3xl font-bold">{sessionData.kilometersDriven.toFixed(1)} km</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-yellow-500" /> $CDRIVE Ganhos
+                  </p>
+                  <p className="text-3xl font-bold text-accent">{sessionData.sessionTokens.toFixed(2)}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        )}
+
+        {/* Transaction History */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Histórico de Transações
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {transactions.map((transaction) => (
+                <div key={transaction.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-4">
+                      <div className="text-sm text-muted-foreground">
+                        {transaction.date} • {transaction.time}
+                      </div>
+                  </div>
+                  <div className="font-medium mt-1">
+                      {transaction.description}
+                    </div>
+                </div>
+                <div className={`font-bold text-lg ${
+                    transaction.amount > 0 ? 'text-accent' : 'text-destructive'
+                  }`}>
+                    {transaction.amount > 0 ? '+' : ''}{transaction.amount.toFixed(1)} $CDRIVE
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+    </div>
+  );
 };
 
-export default Register;
+export default Dashboard;
+resolva os conflitos

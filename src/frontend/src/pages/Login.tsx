@@ -5,40 +5,54 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Leaf, Mail, Lock } from "lucide-react";
-import api from '@/services/api'; // Importe a instância do Axios que criamos
+import api from "@/services/api"; // Mantenha a sua importação
+import { useToast } from "@/hooks/use-toast"; // Adicione o useToast
 
 const Login = () => {
   const navigate = useNavigate();
+  const { toast } = useToast(); // Adicione o hook
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const [isLoading, setIsLoading] = useState(false); // Adicione o estado de carregamento
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login data:", formData);
-    
+    setIsLoading(true); // Inicia o carregamento
+
     try {
-      // Faz a chamada para a rota de login do backend
+      // Usa a sua chamada de API para a rota de login
       const response = await api.post('/login', formData);
       
-      // O backend deve retornar o token JWT e o tipo de usuário
       const { token, userType } = response.data;
       
-      // Salva o token no localStorage
       localStorage.setItem('jwt', token);
       
-      // Redireciona o usuário com base no tipo de usuário retornado pelo backend
+      // Mensagem de sucesso
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Você será redirecionado em instantes.",
+      });
+
+      // Redireciona o usuário
       if (userType === 'Motorista') {
         navigate('/dashboard');
       } else if (userType === 'Empresa') {
         navigate('/admin');
       }
       
-    } catch (error) {
+    } catch (error: any) {
       // Lida com erros de autenticação
-      console.error("Login failed:", error);
-      // Aqui você pode adicionar um toast de erro para o usuário
+      console.error("Erro no login:", error);
+      const errorMessage = error.response?.data?.message || "Erro ao fazer login. Tente novamente.";
+      toast({
+        title: "Erro no Login",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false); // Finaliza o carregamento
     }
   };
 
@@ -109,8 +123,14 @@ const Login = () => {
                 />
               </div>
 
-              <Button type="submit" variant="carbon" size="eco" className="w-full">
-                Entrar
+              <Button
+                  type="submit"
+                  variant="carbon"
+                  size="eco"
+                  className="w-full"
+                  disabled={isLoading}
+              >
+                  {isLoading ? "Entrando..." : "Entrar"}
               </Button>
             </form>
 
