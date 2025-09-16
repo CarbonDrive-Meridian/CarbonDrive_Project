@@ -1,125 +1,3 @@
-# CarbonDrive 🌱
-
-**Plataforma de tokenização de créditos de carbono baseada na blockchain Stellar**
-
-CarbonDrive é uma solução inovadora que permite aos motoristas ganhar tokens $CDRIVE através de práticas de eco-condução, contribuindo para a sustentabilidade ambiental.
-
-## 🚀 Como Executar a Plataforma
-
-### Método Rápido (Recomendado)
-
-1. **Instalar dependências:**
-   ```bash
-   npm run install:all
-   ```
-
-2. **Executar em modo desenvolvimento:**
-   ```bash
-   npm run dev
-   ```
-
-   Isso iniciará automaticamente:
-   - Backend na porta 3000
-   - Frontend na porta 8080
-
-### Usando VSCode
-
-1. **Via Command Palette (Ctrl+Shift+P):**
-   - Digite: `Tasks: Run Task`
-   - Selecione: `🚀 Iniciar CarbonDrive (Dev)`
-
-2. **Via Debug (F5):**
-   - Selecione: `🚀 Debug Full Stack`
-
-### Execução Manual
-
-**Backend:**
-```bash
-npm run backend:dev
-```
-
-**Frontend:**
-```bash
-npm run frontend:dev
-```
-
-## 📋 Scripts Disponíveis
-
-| Script | Descrição |
-|--------|-----------|
-| `npm run dev` | Inicia backend e frontend simultaneamente |
-| `npm run backend:dev` | Inicia apenas o backend |
-| `npm run frontend:dev` | Inicia apenas o frontend |
-| `npm run frontend:build` | Build do frontend para produção |
-| `npm run install:all` | Instala todas as dependências |
-| `npm run clean` | Remove todas as pastas node_modules |
-
-## 🛠️ Configuração do Ambiente
-
-1. **Variáveis de ambiente:**
-   - Configure o arquivo `.env` no diretório `src/backend/`
-
-2. **Dependências:**
-   - Node.js >= 18.0.0
-   - npm >= 9.0.0
-
-## 🌐 URLs de Acesso
-
-- **Frontend:** http://localhost:8080
-- **Backend API:** http://localhost:3000
-- **Dashboard Motorista:** http://localhost:8080/dashboard
-- **Admin Dashboard:** http://localhost:8080/admin
-
-## 💰 Sistema de Conversão
-
-- **1 kg CO² economizado = 1 $CDRIVE**
-- **1 $CDRIVE = 0.05 USD**
-- **Conversão para BRL:** Cotação automática via AwesomeAPI
-
-## 🔧 Desenvolvimento
-
-### Tarefas do VSCode
-- `🚀 Iniciar CarbonDrive (Dev)` - Execução completa
-- `🔧 Backend - Desenvolvimento` - Apenas backend
-- `🎨 Frontend - Desenvolvimento` - Apenas frontend
-- `📦 Instalar Dependências` - Instalar tudo
-- `🏗️ Build Frontend` - Build de produção
-- `🧹 Limpar node_modules` - Limpeza completa
-
-### Debug
-- `🐛 Debug Backend (Node.js)` - Debug do backend
-- `🌐 Debug Frontend (Chrome)` - Debug no Chrome
-- `🚀 Debug Full Stack` - Debug completo
-
-## 📁 Estrutura do Projeto
-
-```
-CarbonDrive_Project/
-├── src/
-│   ├── backend/          # API Node.js
-│   ├── frontend/         # Interface React/Vite
-│   └── contracts/        # Contratos Stellar
-├── .vscode/              # Configurações VSCode
-├── package.json          # Scripts centralizados
-└── README.md
-```
-
-## 🔐 Blockchain
-
-**ID do contrato $CDRIVE:** `CCVVDPP2VE222NK256KZFUU7WXJ6C2ZPJXUI3BBQIKKWWGYLHZKKMVOU`
-
-## 🤝 Contribuição
-
-1. Clone o repositório
-2. Execute `npm run install:all`
-3. Execute `npm run dev`
-4. Faça suas alterações
-5. Teste com `npm run dev`
-
----
-
-**Desenvolvido com ❤️ pela equipe CarbonDrive**
-
 # CarbonDrive Project 
 
 **CarbonDrive** is a B2B2C platform that transforms eco-driving behavior into digital carbon credits.
@@ -136,13 +14,19 @@ We use drivers’ GPS data to prove eco-driving, reward them with **$CDRIVE toke
 
 **CarbonDrive** connects drivers, companies, and blockchain in a seamless ecosystem:
 
-- Drivers download the app → GPS tracks eco-driving → they earn **$CDRIVE** tokens.
+**- Drivers rewarded instantly:** Each eco-driving action (like smoother acceleration or fewer harsh brakes) generates a micro-reward, often worth just a few cents.
 
-- **Stellar blockchain** settles millions of micro-transactions instantly, at near-zero cost.
+**- The micropayment challenge:** Traditional banks can’t process millions of $0.05 or $0.10 transactions daily — fees would exceed the payment itself. Most platforms solve this by tracking IOUs in internal databases, which are not real money and lack transparency.
 
-- Drivers cash out via PIX, while companies buy credits in bulk to offset emissions.
+**- Our approach:** On Stellar, every micro-reward is settled directly on-chain. If a driver earns eight cents, our Soroban smart contract mints exactly 8¢ in $CDRIVE tokens to their Stellar wallet, instantly and at near-zero cost.
 
-→ Turning everyday eco-driving into verifiable, blockchain-backed carbon assets.
+**- Cash-out made simple:** When drivers accumulate a comfortable balance (e.g., $10), they tap `Cash Out`. **CarbonDrive** aggregates their tokens and sends one PIX transfer in Reais to their bank account — turning thousands of micro-events into one macro-payment.
+
+**- For companies:** The tokens collected from drivers are bundled and sold in bulk as auditable carbon credits, directly addressing corporate ESG and compliance needs.
+
+→ **CarbonDrive** makes micropayments feasible, transparent, and scalable — turning daily driving behavior into a new class of carbon credits. 
+
+→ **CarbonDrive** is fully abstracted for drivers. They don’t need to understand blockchain or tokens — they just drive, see their balance grow, and cash out via PIX. This ease of use dramatically increases adoption, because drivers interact only with a simple app interface, while all the blockchain complexity runs silently in the background.”
 
 ## How It Works (Workflow)
 
@@ -170,7 +54,7 @@ We use drivers’ GPS data to prove eco-driving, reward them with **$CDRIVE toke
 
 [Alessandra Sena](https://www.linkedin.com/in/alessandra-ns-sena?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app) - Backend Developer 
 
-[Daniel Augusto](https://www.linkedin.com/in/danielaraujogonncalves/) - Leader
+[Daniel Augusto](https://www.linkedin.com/in/danielaraujogonncalves/) - Project Manager
 
 [João Rodrigo](https://www.linkedin.com/in/joaorodrigodias) – Blockchain Developer (Stellar, Soroban)
 
@@ -187,3 +71,12 @@ We use drivers’ GPS data to prove eco-driving, reward them with **$CDRIVE toke
 - Companies get high-quality, domestic carbon credits.
 
 - Society benefits from safer driving and reduced emissions.
+
+## Next Steps
+- Launch pilot with ride-hailing drivers in São Paulo  
+- Add real-time eco-driving scoring in the app  
+- Enable PIX cash-out for **$CDRIVE** tokens using an API from a fintech (e.g. Stripe)
+- Expand marketplace for corporate carbon credit buyers  
+- Explore partnerships with Uber, 99, and BlaBlaCar
+
+
