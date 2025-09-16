@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  // base: "/CarbonDrive_Project/", // Comentado para desenvolvimento local
+  base: process.env.NODE_ENV === 'production' ? '/CarbonDrive_Project/' : '/',
   resolve: {
     alias: {
       '@': '/src',

@@ -127,13 +127,19 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDollarRate = async () => {
       try {
+        // Use AbortController for better timeout handling
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
         const response = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL', {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
           },
-          signal: AbortSignal.timeout(10000) // 10 second timeout
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -151,7 +157,8 @@ const Dashboard = () => {
           setCdriveToBrlcRate(0.275); // 5.50 * 0.05
         }
       } catch (error) {
-        console.warn('Erro ao buscar cotação do dólar:', error);
+        // Silent error handling - don't show errors to user for currency API
+        console.warn('Erro ao buscar cotação do dólar (usando valores padrão):', error);
         // Use default values in case of error
         setDollarRate(5.50); // Default BRL/USD rate
         setCdriveToBrlcRate(0.275); // 5.50 * 0.05
