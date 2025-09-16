@@ -1,8 +1,12 @@
-# Backend files
+# Backend files (não necessários para frontend)
 src/backend/
 
-# Contracts
+# Contracts (não necessários para frontend)
 src/contracts/
+
+# Rust files (não necessários para frontend)
+src/Cargo.lock
+src/Cargo.toml
 
 # Development files
 node_modules/
@@ -16,6 +20,8 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+bun-debug.log*
+bun-error.log*
 
 # Runtime data
 pids
@@ -47,6 +53,22 @@ jspm_packages/
 
 # dotenv environment variables file
 .env
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+
+# Build artifacts (exceto o dist do frontend)
+*.log
+*.tmp
 
 # IDE files
 .vscode/
