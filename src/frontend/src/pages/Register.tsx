@@ -4,14 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Leaf, User, Mail, Lock, CreditCard } from "lucide-react";
+import { Leaf, User, Mail, Lock } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const Register = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    pixKey: "",
+    userType: "Motorista", // Novo estado para o tipo de usuário
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,6 +25,13 @@ const Register = () => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleUserTypeChange = (value: string) => {
+    setFormData({
+      ...formData,
+      userType: value,
     });
   };
 
@@ -53,6 +61,27 @@ const Register = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Opção de Tipo de Usuário */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  Tipo de Usuário
+                </Label>
+                <RadioGroup
+                  defaultValue="Motorista"
+                  onValueChange={handleUserTypeChange}
+                  className="flex items-center justify-around w-full h-12 rounded-lg border px-4 py-2"
+                >
+                  <div className="flex items-center space-x-2 cursor-pointer">
+                    <RadioGroupItem value="Motorista" id="driver" />
+                    <Label htmlFor="driver" className="cursor-pointer">Motorista</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 cursor-pointer">
+                    <RadioGroupItem value="Empresa" id="company" />
+                    <Label htmlFor="company" className="cursor-pointer">Empresa</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="name" className="flex items-center gap-2">
                   <User className="h-4 w-4" />
@@ -103,23 +132,7 @@ const Register = () => {
                   className="h-12"
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="pixKey" className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  Chave PIX
-                </Label>
-                <Input
-                  id="pixKey"
-                  name="pixKey"
-                  type="text"
-                  placeholder="Digite sua chave PIX"
-                  value={formData.pixKey}
-                  onChange={handleChange}
-                  required
-                  className="h-12"
-                />
-              </div>
+              {/* O campo Chave PIX foi removido */}
 
               <Button type="submit" variant="carbon" size="eco" className="w-full">
                 Criar Conta

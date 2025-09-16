@@ -73,7 +73,7 @@ const Index = () => {
           <div className="text-center mb-12">
             <h3 className="text-3xl font-bold mb-4">Como Funciona o CarbonDrive</h3>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Uma plataforma simples e transparente que conecta motoristas conscientes a empresas que valorizam a sustentabilidade
+              Recompensando a boa condução, monetizando a sustentabilidade.
             </p>
           </div>
 
@@ -117,8 +117,7 @@ const Index = () => {
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-base">
-                  Empresas compram créditos de carbono da plataforma, 
-                  financiando suas recompensas de forma sustentável
+                  Transformamos o carbono que você economiza em créditos que são vendidos para empresas, financiando suas recompensas.
                 </CardDescription>
               </CardContent>
             </Card>

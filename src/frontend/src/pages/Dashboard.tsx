@@ -1,28 +1,38 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom"; // Adicione o useNavigate
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Leaf, 
-  Car, 
   DollarSign, 
   TrendingUp, 
   Zap,
   User,
-  ThumbsUp,
-  Trophy,
   ChevronDown,
-  Clock
+  Clock,
+  Bolt,
+  Car
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios"; // Importe o axios
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
+  // Estado para dados vindos da API
   const [driverBalance, setDriverBalance] = useState(247.5);
   const [dailyEarnings] = useState(15.5);
-  const [tripsToday] = useState(12);
-  const [ecoScore] = useState(85);
-  const [ranking] = useState(23);
+  const [isJourneyActive, setIsJourneyActive] = useState(false);
+  const [sessionData, setSessionData] = useState({
+    carbonSaved: 0,
+    sessionTokens: 0,
+    kilometersDriven: 0,
+  });
 
+  // Cotação: 1 $CDRIVE = R$ 0.20 (Exemplo B2C)
+  const cdriveToBrlcRate = 0.20;
+
+  // Transações de exemplo, serão substituídas por dados reais da API
   const [transactions] = useState([
     { id: 1, date: "15/09/2024", time: "14:30", description: "Eco-condução - Rota Centro", amount: 8.5 },
     { id: 2, date: "15/09/2024", time: "12:15", description: "Eco-condução - Rota Norte", amount: 7.0 },
@@ -30,30 +40,91 @@ const Dashboard = () => {
     { id: 4, date: "14/09/2024", time: "16:20", description: "Eco-condução - Rota Sul", amount: 9.2 },
   ]);
 
-  const handleEcoSimulation = () => {
-    const earnedTokens = Math.random() * 10 + 5;
-    setDriverBalance(prev => prev + earnedTokens);
-    
-    toast({
-      title: "Eco-condução Simulada!",
-      description: `Você ganhou ${earnedTokens.toFixed(2)} $CDRIVE tokens`,
-    });
-  };
-
-  const handlePixExchange = () => {
-    if (driverBalance >= 10) {
-      const exchangeAmount = Math.floor(driverBalance / 10) * 10;
-      const realValue = exchangeAmount * 0.2;
-      setDriverBalance(prev => prev - exchangeAmount);
-      
+  const handleEcoSimulation = async () => {
+    // Obter o token de autenticação
+    const token = localStorage.getItem('jwt');
+    if (!token) {
       toast({
-        title: "Troca Realizada!",
-        description: `R$ ${realValue.toFixed(2)} foi enviado para sua chave PIX`,
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para iniciar uma jornada.",
+        variant: "destructive",
+      });
+      navigate('/login'); // Redireciona para o login se não houver token
+      return;
+    }
+
+    if (!isJourneyActive) {
+      // INICIAR a jornada
+      setIsJourneyActive(true);
+      toast({
+        title: "Jornada Iniciada!",
+        description: "Agora estamos monitorando sua condução.",
       });
     } else {
+      // FINALIZAR a jornada e chamar a API para calcular ganhos
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/motorista/eco-conducao`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const { carbonSaved, sessionTokens, kilometersDriven } = response.data;
+
+        // Atualiza os estados com dados reais da API
+        setDriverBalance(prev => prev + sessionTokens);
+        setSessionData({ carbonSaved, sessionTokens, kilometersDriven });
+        setIsJourneyActive(false);
+
+        toast({
+          title: "Jornada Finalizada!",
+          description: `Você economizou ${carbonSaved.toFixed(2)} kg de carbono e ganhou ${sessionTokens.toFixed(2)} $CDRIVE.`,
+        });
+
+      } catch (error) {
+        console.error("Erro ao finalizar jornada:", error);
+        toast({
+          title: "Erro na Jornada",
+          description: "Não foi possível calcular seus ganhos. Tente novamente.",
+          variant: "destructive",
+        });
+        setIsJourneyActive(false);
+      }
+    }
+  };
+
+  const handlePixExchange = async () => {
+    const token = localStorage.getItem('jwt');
+    if (!token) {
       toast({
-        title: "Saldo Insuficiente",
-        description: "Você precisa de pelo menos 10 $CDRIVE para fazer uma troca",
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para fazer a troca.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/motorista/trocar-cdr-por-pix`,
+        { amount: driverBalance }, // Ou o valor específico que o usuário deseja trocar
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const { newBalance, pixValue } = response.data;
+      setDriverBalance(newBalance);
+
+      toast({
+        title: "Troca Realizada!",
+        description: `R$ ${pixValue.toFixed(2)} foi enviado para sua chave PIX`,
+      });
+
+    } catch (error) {
+      console.error("Erro na troca PIX:", error);
+      toast({
+        title: "Erro na Troca",
+        description: "Saldo insuficiente ou erro na transação. Tente novamente.",
         variant: "destructive",
       });
     }
@@ -90,13 +161,13 @@ const Dashboard = () => {
           <CardContent className="p-8">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <p className="text-primary-foreground/80 text-sm mb-2">Seu Saldo</p>
+                <p className="text-primary-foreground/80 text-sm mb-2">Acumule tokens</p>
                 <div className="space-y-2">
                   <div className="text-4xl font-bold">
                     {driverBalance.toFixed(1)} $CDRIVE
                   </div>
                   <div className="text-primary-foreground/90 text-lg">
-                    = R$ {(driverBalance * 0.2).toFixed(2)}
+                    = R$ {(driverBalance * cdriveToBrlcRate).toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -119,7 +190,7 @@ const Dashboard = () => {
             className="h-16 text-lg"
           >
             <Zap className="h-6 w-6" />
-            Simular Eco-Condução
+            {isJourneyActive ? "Finalizar Jornada" : "Iniciar Jornada Ecológica"}
           </Button>
           
           <Button 
@@ -129,48 +200,45 @@ const Dashboard = () => {
             className="h-16 text-lg"
           >
             <DollarSign className="h-6 w-6" />
-            Trocar por Reais (PIX)
+            Trocar por Reais (Pix)
           </Button>
         </div>
 
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="text-center">
-            <CardHeader className="pb-4">
-              <div className="mx-auto p-3 bg-accent/20 rounded-full w-fit">
-                <Car className="h-6 w-6 text-accent" />
-              </div>
-              <CardTitle className="text-sm text-muted-foreground font-medium">Viagens Hoje</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{tripsToday}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardHeader className="pb-4">
-              <div className="mx-auto p-3 bg-accent/20 rounded-full w-fit">
-                <ThumbsUp className="h-6 w-6 text-accent" />
-              </div>
-              <CardTitle className="text-sm text-muted-foreground font-medium">Pontuação Eco</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{ecoScore}%</div>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardHeader className="pb-4">
-              <div className="mx-auto p-3 bg-accent/20 rounded-full w-fit">
-                <Trophy className="h-6 w-6 text-accent" />
-              </div>
-              <CardTitle className="text-sm text-muted-foreground font-medium">Ranking</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">#{ranking}</div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Resumo da Jornada (condicional) */}
+        {isJourneyActive ? (
+          <div className="flex items-center justify-center p-6 bg-green-100 rounded-lg shadow-inner">
+            <Bolt className="h-6 w-6 text-green-600 mr-3 animate-pulse" />
+            <span className="text-green-800 text-lg font-medium">Sua jornada está ativa... Dirija ecologicamente!</span>
+          </div>
+        ) : (
+          (sessionData.sessionTokens > 0) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl font-bold text-accent">Resumo da sua Jornada</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <p className="text-muted-foreground flex items-center gap-2">
+                    <Leaf className="h-5 w-5 text-green-500" /> Carbono Economizado
+                  </p>
+                  <p className="text-3xl font-bold">{sessionData.carbonSaved.toFixed(2)} kg</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground flex items-center gap-2">
+                    <Car className="h-5 w-5 text-blue-500" /> KM Percorridos
+                  </p>
+                  <p className="text-3xl font-bold">{sessionData.kilometersDriven.toFixed(1)} km</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-muted-foreground flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-yellow-500" /> $CDRIVE Ganhos
+                  </p>
+                  <p className="text-3xl font-bold text-accent">{sessionData.sessionTokens.toFixed(2)}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        )}
 
         {/* Transaction History */}
         <Card>
