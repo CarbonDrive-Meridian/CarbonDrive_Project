@@ -2,8 +2,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const StellarSdk = require('stellar-sdk');
-const { Server, Keypair } = require('stellar-sdk');
-const { TransactionBuilder, Operation, Asset } = require('stellar-sdk');
+const { Server, Keypair, TransactionBuilder, Operation, Asset } = require('@stellar/stellar-sdk'); // Use the new package and destructure classes directly
 const User = require('../models/user');
 const crypto = require('crypto');
 
@@ -24,18 +23,18 @@ function encrypt(text) {
 }
 
 function decrypt(encryptedData) {
-    const bData = Buffer.from(String(encryptedData), 'hex');
-    const salt = bData.slice(0, SALT_LENGTH);
-    const iv = bData.slice(SALT_LENGTH, SALT_LENGTH + IV_LENGTH);
-    const tag = bData.slice(SALT_LENGTH + IV_LENGTH, SALT_LENGTH + IV_LENGTH + TAG_LENGTH);
-    const encrypted = bData.slice(SALT_LENGTH + IV_LENGTH + TAG_LENGTH);
-    const decipher = crypto.createDecipheriv(ALGORITHM, KEY, iv);
-    decipher.setAuthTag(tag);
-    return decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8');
+  const bData = Buffer.from(String(encryptedData), 'hex');
+  const salt = bData.slice(0, SALT_LENGTH);
+  const iv = bData.slice(SALT_LENGTH, SALT_LENGTH + IV_LENGTH);
+  const tag = bData.slice(SALT_LENGTH + IV_LENGTH, SALT_LENGTH + IV_LENGTH + TAG_LENGTH);
+  const encrypted = bData.slice(SALT_LENGTH + IV_LENGTH + TAG_LENGTH);
+  const decipher = crypto.createDecipheriv(ALGORITHM, KEY, iv);
+  decipher.setAuthTag(tag);
+  return decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8');
 }
 
 // --- Stellar Configuration ---
-const server = new Server('https://horizon-testnet.stellar.org');
+const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
 const adminKeypair = Keypair.fromSecret(process.env.CHAVE_PRIVADA_ADMIN);
 
 // --- Controller ---
