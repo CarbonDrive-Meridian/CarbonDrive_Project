@@ -1,0 +1,19 @@
+[package]
+name = "carbondrive"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["lib", "cdylib"]
+doctest = false
+path = "src/token_contract.rs"
+
+[dependencies]
+soroban-sdk = { workspace = true }
+stellar-access = "0.4.1"
+stellar-macros = "0.4.1"
+stellar-tokens = "0.4.1"
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
