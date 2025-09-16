@@ -5,7 +5,7 @@ const { Horizon, Keypair, Asset, TransactionBuilder, Operation, Networks } = Ste
 
 const ADMIN_PUBLIC = process.env.CHAVE_PUBLICA_ADMIN;
 
-// Retorna the pair or throws an error
+// Retorns the pair or throws an error
 export async function createAndFundWallet() {
   const pair = Keypair.random();
   const publicKey = pair.publicKey();
@@ -62,8 +62,9 @@ export async function createTrustline(UserSecret) {
 
     tx.sign(inventoryKeypair);
 
-    const txResult = await server.submitTransaction(tx);
-    console.log('Trustline criada com sucesso.g');
+    await server.submitTransaction(tx);
+    
+    console.log('Trustline criada com sucesso.');
   } catch (err) {
     if (err.response && err.response.data) {
       console.error('Erro do Horizon:', JSON.stringify(err.response.data, null, 2));
