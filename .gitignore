@@ -1,3 +1,41 @@
+# Diretórios de Módulos
+node_modules/
+dist/
+build/
+coverage/
+
+# Variáveis de Ambiente e Arquivos de Configuração Local
+.env
+.env.local
+.env.production
+.env.development
+
+# Logs e Dados de Aplicação Temporários
+*.log
+*.tmp
+*.bak
+*.cache
+
+# Arquivos de Ferramentas e IDEs
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Saídas do TypeScript
+*.tsbuildinfo
+
+# Build do Vite
+.vite/
+
+# Arquivos de Teste
+test-results/
+
+# Artefatos do Python (se o backend usar Python)
+__pycache__/
+*.pyc
+.venv/
+
 .env
 stablish_trustline.js
 yarn.lock
