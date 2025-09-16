@@ -4,3 +4,12 @@ target
 # Local settings
 .soroban
 .stellar
+
+.env
+stablish_trustline.js
+yarn.lock
+fetch_js.js
+package.json
+package-lock.json
+/node_modules
+src/backend/node_modules
