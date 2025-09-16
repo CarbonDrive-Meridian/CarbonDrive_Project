@@ -43,5 +43,6 @@ fetch_js.js
 package.json
 package-lock.json
 /node_modules
+/src/backend/functions/finaltest.js
 src/backend/database.sqlite
 src/backend/node_modules
