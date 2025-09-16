@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CarbonDrive Design System - Eco-friendly green palette with modern aesthetics */
+
+@layer base {
+  :root {
+    /* Base colors - Clean and minimal */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 15%;
+
+    /* Card system */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 15%;
+
+    /* Popover system */
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 15%;
+
+    /* CarbonDrive brand colors */
+    --primary: 149 42% 30%; /* Deep forest green #2E6A4B */
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 29%; /* Charcoal gray #4A4A4A */
+    --secondary-foreground: 0 0% 98%;
+
+    --accent: 158 64% 53%; /* Bright aqua green #36D9A0 */
+    --accent-foreground: 149 42% 15%;
+
+    /* Additional semantic colors */
+    --muted: 149 15% 92%;
+    --muted-foreground: 0 0% 45%;
+
+    --success: 158 64% 53%; /* Same as accent for eco-theme */
+    --success-foreground: 149 42% 15%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 149 15% 88%;
+    --input: 149 15% 92%;
+    --ring: 158 64% 53%;
+
+    --radius: 0.75rem;
+
+    /* CarbonDrive gradients and effects */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(149 42% 25%));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(158 64% 60%));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+    
+    /* Shadows with brand colors */
+    --shadow-primary: 0 10px 30px -10px hsl(var(--primary) / 0.15);
+    --shadow-accent: 0 4px 20px -4px hsl(var(--accent) / 0.25);
+    --shadow-card: 0 2px 15px -3px hsl(149 15% 50% / 0.1);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .dark {
+    /* Dark mode - keeping it minimal as requested */
+    --background: 149 42% 8%;
+    --foreground: 0 0% 95%;
+    --card: 149 42% 10%;
+    --card-foreground: 0 0% 95%;
+    --primary: 158 64% 55%;
+    --primary-foreground: 149 42% 10%;
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 149 15% 15%;
+    --muted-foreground: 0 0% 65%;
+    --border: 149 15% 20%;
+    --input: 149 15% 15%;
+    --ring: 158 64% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Custom scrollbar for CarbonDrive */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary));
+    border-radius: 3px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--accent));
+  }
+}
+
+@layer components {
+  /* CarbonDrive component styles */
+  .carbon-card {
+    @apply bg-card border border-border rounded-xl shadow-[var(--shadow-card)] transition-[var(--transition-smooth)];
+  }
+  
+  .carbon-card:hover {
+    @apply shadow-[var(--shadow-primary)];
+  }
+  
+  .gradient-text {
+    background: var(--gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .balance-highlight {
+    @apply text-3xl font-bold gradient-text;
+  }
+}
