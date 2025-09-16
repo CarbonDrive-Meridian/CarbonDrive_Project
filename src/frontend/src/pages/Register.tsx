@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Importe useNavigate
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Leaf, User, Mail, Lock } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import api from "@/services/api"; // Importe a instância do Axios
 
 const Register = () => {
+  const navigate = useNavigate(); // Hook para redirecionar o usuário
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -15,10 +17,22 @@ const Register = () => {
     userType: "Motorista", // Novo estado para o tipo de usuário
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Registration data:", formData);
-    // Here would be API integration
+
+    try {
+      // Faz a chamada para a rota de cadastro do backend
+      // A rota não exige autenticação, então não precisamos de token
+      const response = await api.post("/register", { ...formData });
+
+      if (response.status === 201) {
+        // Se o cadastro for bem-sucedido, redireciona para a página de login
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error("Registration failed:", error);
+      // Aqui você pode adicionar um toast de erro para o usuário
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

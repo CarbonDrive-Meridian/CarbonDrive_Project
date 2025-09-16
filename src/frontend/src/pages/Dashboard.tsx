@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // Adicione o useNavigate
+import { useNavigate } from "react-router-dom"; // Importe o useNavigate
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -14,7 +14,7 @@ import {
   Car
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import axios from "axios"; // Importe o axios
+import api from "@/services/api"; // Importe a instância do Axios que criamos
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -63,10 +63,9 @@ const Dashboard = () => {
     } else {
       // FINALIZAR a jornada e chamar a API para calcular ganhos
       try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/motorista/eco-conducao`,
+        const response = await api.post(
+          `/motorista/eco-conducao`,
           {},
-          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         const { carbonSaved, sessionTokens, kilometersDriven } = response.data;
@@ -106,10 +105,9 @@ const Dashboard = () => {
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/motorista/trocar-cdr-por-pix`,
+      const response = await api.post(
+        `/motorista/trocar-cdr-por-pix`,
         { amount: driverBalance }, // Ou o valor específico que o usuário deseja trocar
-        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       const { newBalance, pixValue } = response.data;
