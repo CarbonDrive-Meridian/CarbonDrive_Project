@@ -1,11 +1,11 @@
-import * as StellarSdk from '@stellar/stellar-sdk';
+import { Keypair, Contract, SorobanRpc, TransactionBuilder, Networks, BASE_FEE, nativeToScVal, Address, scValToNative } from '@stellar/stellar-sdk';
 import 'dotenv/config.js';
 
-const { Horizon, Keypair, Asset, TransactionBuilder, Operation, Networks } = StellarSdk;
+const CONTRACT_ID = process.env.CONTRACT_ID;
+const RPC_URL = 'https://soroban-testnet.stellar.org';
+const server = new SorobanRpc.Server(RPC_URL);
 
-const ADMIN_PUBLIC = process.env.CHAVE_PUBLICA_ADMIN;
-
-// Retorns the pair or throws an error
+// Retorna o par ou lança erro
 export async function createAndFundWallet() {
   const pair = Keypair.random();
   const publicKey = pair.publicKey();
@@ -15,7 +15,11 @@ export async function createAndFundWallet() {
     
     if (response.ok) {
       console.log('Conta criada e financiada com sucesso.');
-      return pair; 
+      return {
+        keypair: pair,
+        publicKey: pair.publicKey(),
+        secret: pair.secret()
+      };
     } else {
       throw new Error('Failed to fund account via Friendbot.');
     }
@@ -25,52 +29,46 @@ export async function createAndFundWallet() {
   }
 }
 
-// Creates a trustline to $CDRIVE for the user identified by UserSecret (a string)
-export async function createTrustline(UserSecret) {
-  // .env check
-  if (!ADMIN_PUBLIC) {
-    console.error('Erro: CHAVE_PUBLICA_ADMIN não definida no .env');
-    process.exit(1);
-  }
-  if (!UserSecret) {
-    console.error('Erro: UserSecret não fornecida');
-    process.exit(1);
-  }
-
-  const horizonURL = 'https://horizon-testnet.stellar.org';
-
-  const server = new Horizon.Server(horizonURL);
-
-  // Key Setup
-  const inventoryKeypair = Keypair.fromSecret(UserSecret);
-  const inventoryPublic = inventoryKeypair.publicKey();
-
-  // ADMIN_PUBLIC  é o emissor do ativo
-  const asset = new Asset("CDRIVE", ADMIN_PUBLIC);
-
+// Consulta o saldo de tokens do contrato Soroban
+export async function getBalance(account) {
   try {
-    const account = await server.loadAccount(inventoryPublic);
-    const fee = await server.fetchBaseFee();
+    const contract = new Contract(CONTRACT_ID);
 
-    const tx = new TransactionBuilder(account, {
-      fee: fee.toString(), // Ensure fee is a string
+    // Conta dummy para simulação
+    const dummyAccount = await server.getAccount('GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF');
+
+    const balanceOp = contract.call(
+      'balance',
+      nativeToScVal(Address.fromString(account), { type: 'address' })
+    );
+
+    const transaction = new TransactionBuilder(dummyAccount, {
+      fee: BASE_FEE,
       networkPassphrase: Networks.TESTNET,
     })
-      .addOperation(Operation.changeTrust({ asset }))
-      .setTimeout(60)
+      .addOperation(balanceOp)
+      .setTimeout(30)
       .build();
 
-    tx.sign(inventoryKeypair);
+    // Simula para obter o resultado
+    const simResult = await server.simulateTransaction(transaction);
 
-    await server.submitTransaction(tx);
-    
-    console.log('Trustline criada com sucesso.');
-  } catch (err) {
-    if (err.response && err.response.data) {
-      console.error('Erro do Horizon:', JSON.stringify(err.response.data, null, 2));
-    } else {
-      console.error('Erro:', err);
+    console.log('Resultado da simulação:', simResult);
+
+    if (simResult.result && simResult.result.retval) {
+      try {
+        const balance = scValToNative(simResult.result.retval);
+        const humanReadableBalance = Number(balance) / (10 ** 7);
+        return humanReadableBalance.toString();
+      } catch (err) {
+        console.error('Erro ao converter saldo:', err);
+        return "0";
+      }
     }
-    process.exit(1);
+
+    return "0";
+  } catch (error) {
+    console.error('Erro ao consultar saldo:', error);
+    throw error;
   }
 }

@@ -5,4 +5,5 @@ fetch_js.js
 package.json
 package-lock.json
 /node_modules
-/src/backend/functions/testing.js
+/src/backend/functions/finaltest.js
+
