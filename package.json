@@ -1,0 +1,38 @@
+{
+  "name": "carbondrive-project",
+  "version": "1.0.0",
+  "description": "CarbonDrive - Plataforma de tokenização de créditos de carbono",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "start": "concurrently \"npm run backend:start\" \"npm run frontend:build\"",
+    "backend:dev": "cd src/backend && node index.js",
+    "backend:start": "cd src/backend && node index.js",
+    "frontend:dev": "cd src/frontend && npm run dev",
+    "frontend:build": "cd src/frontend && npm run build",
+    "frontend:preview": "cd src/frontend && npm run preview",
+    "install:all": "npm install && cd src/backend && npm install && cd ../frontend && npm install",
+    "clean": "cd src/backend && rm -rf node_modules && cd ../frontend && rm -rf node_modules && rm -rf node_modules",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "carbon",
+    "blockchain",
+    "stellar",
+    "tokenization",
+    "sustainability"
+  ],
+  "author": "CarbonDrive Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/carbondrive-project.git"
+  }
+}

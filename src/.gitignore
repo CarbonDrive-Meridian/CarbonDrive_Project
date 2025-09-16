@@ -9,7 +9,7 @@ target
 stablish_trustline.js
 yarn.lock
 fetch_js.js
-package.json
-package-lock.json
+# package.json - Removido para permitir deploy no Vercel
+# package-lock.json - Mantido ignorado, usar apenas um lock file
 /node_modules
 src/backend/node_modules
