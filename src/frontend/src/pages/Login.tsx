@@ -5,36 +5,54 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Leaf, Mail, Lock } from "lucide-react";
-import { authService, apiUtils } from "@/services/api";
-import { toast } from "sonner";
+import api from "@/services/api"; // Mantenha a sua importação
+import { useToast } from "@/hooks/use-toast"; // Adicione o useToast
 
 const Login = () => {
   const navigate = useNavigate();
+  const { toast } = useToast(); // Adicione o hook
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Adicione o estado de carregamento
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsLoading(true); // Inicia o carregamento
 
     try {
-      const response = await authService.login(formData);
+      // Usa a sua chamada de API para a rota de login
+      const response = await api.post('/login', formData);
       
-      // Salvar token e dados do usuário
-      apiUtils.setAuthToken(response.token);
-      apiUtils.setUserData(response.user);
+      const { token, userType } = response.data;
       
-      toast.success("Login realizado com sucesso!");
-      navigate("/dashboard");
+      localStorage.setItem('jwt', token);
+      
+      // Mensagem de sucesso
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Você será redirecionado em instantes.",
+      });
+
+      // Redireciona o usuário
+      if (userType === 'Motorista') {
+        navigate('/dashboard');
+      } else if (userType === 'Empresa') {
+        navigate('/admin');
+      }
+      
     } catch (error: any) {
+      // Lida com erros de autenticação
       console.error("Erro no login:", error);
-      const errorMessage = error.response?.data?.error || "Erro ao fazer login. Tente novamente.";
-      toast.error(errorMessage);
+      const errorMessage = error.response?.data?.message || "Erro ao fazer login. Tente novamente.";
+      toast({
+        title: "Erro no Login",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Finaliza o carregamento
     }
   };
 
@@ -105,14 +123,14 @@ const Login = () => {
                 />
               </div>
 
-              <Button 
-                type="submit" 
-                variant="carbon" 
-                size="eco" 
-                className="w-full"
-                disabled={isLoading}
+              <Button
+                  type="submit"
+                  variant="carbon"
+                  size="eco"
+                  className="w-full"
+                  disabled={isLoading}
               >
-                {isLoading ? "Entrando..." : "Entrar"}
+                  {isLoading ? "Entrando..." : "Entrar"}
               </Button>
             </form>
 

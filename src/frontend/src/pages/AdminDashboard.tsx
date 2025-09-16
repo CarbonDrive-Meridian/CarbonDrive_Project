@@ -2,43 +2,27 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Leaf, Package, Building, DollarSign } from "lucide-react";
-import { Input } from "@/components/ui/input"; // Importe o componente Input
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import axios from "axios"; // Importe o axios para chamadas de API
+import api from '@/services/api'; // Importa a instância do Axios que criamos
 
 const AdminDashboard = () => {
   const { toast } = useToast();
-  const [inventoryBalance, setInventoryBalance] = useState(1500); // Exemplo de saldo
+  const [inventoryBalance, setInventoryBalance] = useState(1500);
   const [purchaseQuantity, setPurchaseQuantity] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
-  const [cdriveToBrlcRate] = useState(0.50); // Exemplo de cotação: 1 $CDRIVE = R$ 0.50
+  const [cdriveToBrlcRate] = useState(0.50);
 
   useEffect(() => {
-    // Calcula o custo total sempre que a quantidade de compra muda
     const cost = purchaseQuantity * cdriveToBrlcRate;
     setTotalCost(cost);
   }, [purchaseQuantity, cdriveToBrlcRate]);
 
   const handleSellToCompany = async () => {
     try {
-      // Exemplo de como obter o token de autenticação
-      const token = localStorage.getItem('jwt');
-      if (!token) {
-        toast({
-          title: "Erro de autenticação",
-          description: "Você precisa estar logado como admin para realizar esta ação.",
-          variant: "destructive",
-        });
-        return;
-      }
+      // Usa a instância 'api' para fazer a requisição
+      await api.post('/admin/vender-lote-empresas', { quantity: purchaseQuantity });
 
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/admin/vender-lote-empresas`,
-        { quantity: purchaseQuantity },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      // Simulação: atualiza o saldo do inventário após a venda
       setInventoryBalance(prevBalance => prevBalance - purchaseQuantity);
       setPurchaseQuantity(0);
 
@@ -46,12 +30,12 @@ const AdminDashboard = () => {
         title: "Venda Realizada!",
         description: `Lote de ${purchaseQuantity} $CDRIVE vendido por R$ ${totalCost.toFixed(2)}.`,
       });
-
     } catch (error) {
       console.error("Erro ao vender lote:", error);
+      const errorMessage = error.response?.data?.message || "Não foi possível vender o lote. Tente novamente.";
       toast({
         title: "Erro na Venda",
-        description: "Não foi possível vender o lote. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -74,12 +58,6 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-8">
-        {/* Page Title */}
-        <div>
-          <h2 className="text-4xl font-bold text-foreground mb-2">Painel da Plataforma</h2>
-          <p className="text-muted-foreground">Gerencie o inventário e vendas de créditos de carbono</p>
-        </div>
-
         {/* Inventory Card (exibe saldo total e valor) */}
         <Card className="bg-primary text-primary-foreground overflow-hidden">
           <CardContent className="p-8">

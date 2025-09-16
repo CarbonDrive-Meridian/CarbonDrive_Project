@@ -1,21 +1,18 @@
 import axios from 'axios';
 
-// Configuração base da API
-const API_BASE_URL = 'http://localhost:3000';
-
-// Instância do axios com configurações padrão
+// Configuração base da API usando a variável de ambiente do Vite
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 segundos de timeout
+  timeout: 10000, // Adicionado timeout de 10 segundos para requisições
 });
 
-// Interceptor para adicionar token de autenticação
+// Interceptor para adicionar o token de autenticação em cada requisição
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('jwt'); // Mantém o seu 'jwt' para consistência
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -26,110 +23,20 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para tratar respostas e erros
+// Interceptor para tratar respostas e erros de forma global
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
+    // Se o token estiver expirado ou a requisição for 401, remove o token e redireciona
     if (error.response?.status === 401) {
-      // Token expirado ou inválido
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userData');
+      localStorage.removeItem('jwt');
+      // Em uma aplicação real, você usaria um router para redirecionar
       window.location.href = '/login';
     }
     return Promise.reject(error);
   }
 );
-
-// Tipos para as requisições
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  pix_key?: string;
-}
-
-export interface AuthResponse {
-  message: string;
-  token: string;
-  user: {
-    id: number;
-    email: string;
-    stellar_public_key: string;
-  };
-}
-
-// Serviços de autenticação
-export const authService = {
-  login: async (data: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post('/auth/login', data);
-    return response.data;
-  },
-
-  register: async (data: RegisterRequest): Promise<AuthResponse> => {
-    const response = await api.post('/auth/register', data);
-    return response.data;
-  },
-
-  logout: () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
-  },
-};
-
-// Serviços do motorista
-export const motoristaService = {
-  gerarCreditos: async (amount: number = 10) => {
-    const response = await api.post('/motorista/gerar-creditos-eco', { amount });
-    return response.data;
-  },
-
-  trocarCdrPorPix: async (amount: number) => {
-    const response = await api.post('/motorista/trocar-cdr-por-pix', { amount });
-    return response.data;
-  },
-};
-
-// Serviços do admin
-export const adminService = {
-  listarUsuarios: async () => {
-    const response = await api.get('/admin/usuarios');
-    return response.data;
-  },
-
-  gerarCreditos: async (userId: number, amount: number) => {
-    const response = await api.post('/admin/gerar-creditos', { userId, amount });
-    return response.data;
-  },
-};
-
-// Utilitários
-export const apiUtils = {
-  setAuthToken: (token: string) => {
-    localStorage.setItem('authToken', token);
-  },
-
-  getAuthToken: () => {
-    return localStorage.getItem('authToken');
-  },
-
-  setUserData: (userData: any) => {
-    localStorage.setItem('userData', JSON.stringify(userData));
-  },
-
-  getUserData: () => {
-    const userData = localStorage.getItem('userData');
-    return userData ? JSON.parse(userData) : null;
-  },
-
-  isAuthenticated: () => {
-    return !!localStorage.getItem('authToken');
-  },
-};
 
 export default api;

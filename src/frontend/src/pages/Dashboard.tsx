@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Importe o useNavigate
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,8 +15,8 @@ import {
   Car
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { motoristaService } from "@/services/api";
-
+import api from "@/services/api"; // Importe a instância do Axios que criamos
+        
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -63,10 +64,9 @@ const Dashboard = () => {
     } else {
       // FINALIZAR a jornada e chamar a API para calcular ganhos
       try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/motorista/eco-conducao`,
+        const response = await api.post(
+          `/motorista/eco-conducao`,
           {},
-          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         const { carbonSaved, sessionTokens, kilometersDriven } = response.data;
@@ -95,7 +95,10 @@ const Dashboard = () => {
 
   const handlePixExchange = async () => {
     try {
-      const response = await motoristaService.trocarCdrPorPix(driverBalance);
+      const response = await api.post(
+        `/motorista/trocar-cdr-por-pix`,
+        { amount: driverBalance }, // Ou o valor específico que o usuário deseja trocar
+      );
 
       // Atualizar o saldo local (em uma aplicação real, você buscaria do servidor)
       setDriverBalance(0);
