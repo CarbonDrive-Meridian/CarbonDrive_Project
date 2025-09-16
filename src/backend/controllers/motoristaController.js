@@ -69,11 +69,7 @@ exports.ecoConducao = async (req, res) => {
 
 exports.trocarCdrPorPix = async (req, res) => {
   const userId = req.user.id;
-  const { amount } = req.body;
-
-  if (!amount || amount <= 0) {
-    return res.status(400).json({ error: 'Invalid amount' });
-  }
+  const amount = parseFloat(req.body.amount); // A validação já foi feita no middleware
 
   try {
     const user = await User.findByPk(userId);

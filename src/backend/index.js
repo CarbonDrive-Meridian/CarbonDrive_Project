@@ -9,6 +9,14 @@ const adminRoutes = require('./routes/admin');
 const app = express();
 app.use(express.json());
 
+// Middleware para garantir que o corpo da requisição seja sempre um objeto válido
+app.use((req, res, next) => {
+  if (req.method === 'POST' && !req.body) {
+    req.body = {};
+  }
+  next();
+});
+
 // Routes
 app.use('/auth', authRoutes);
 app.use('/motorista', motoristaRoutes);
