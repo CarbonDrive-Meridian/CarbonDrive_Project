@@ -88,9 +88,11 @@ const Register = () => {
         navigate('/admin');
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro no cadastro:", error);
-      const errorMessage = error.response?.data?.error || "Error creating account. Please try again.";
+      const errorMessage = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error || "Error creating account. Please try again."
+        : "Error creating account. Please try again.";
       toast({
         title: "Erro no Cadastro",
         description: errorMessage,

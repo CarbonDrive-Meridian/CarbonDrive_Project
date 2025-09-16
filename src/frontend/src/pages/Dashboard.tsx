@@ -109,10 +109,10 @@ const Dashboard = () => {
         setUserProfile(response.data);
         // Atualizar localStorage com dados mais recentes
         localStorage.setItem('user', JSON.stringify(response.data));
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Erro ao carregar perfil do usuário:", error);
         // Se não conseguir carregar o perfil, redirecionar para login
-        if (error.response?.status === 401) {
+        if (error instanceof Error && 'response' in error && (error as { response?: { status?: number } }).response?.status === 401) {
           localStorage.removeItem('jwt');
           localStorage.removeItem('user');
           navigate('/login');
@@ -249,9 +249,11 @@ const Dashboard = () => {
         description: `R$ ${response.data.amount_brl.toFixed(2)} was sent to your PIX key`,
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("PIX exchange error:", error);
-      const errorMessage = error.response?.data?.error || "Transaction error. Please try again.";
+      const errorMessage = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error || "Transaction error. Please try again."
+        : "Transaction error. Please try again.";
       toast({
         title: "Exchange Error",
         description: errorMessage,

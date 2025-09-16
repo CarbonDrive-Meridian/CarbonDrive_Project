@@ -1,28 +1,16 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  base: process.env.NODE_ENV === 'production' ? '/CarbonDrive_Project/' : '/',
-  server: {
-    host: "::",
-    port: 8080,
-  },
+export default defineConfig({
   plugins: [react()],
+  // base: "/CarbonDrive_Project/", // Comentado para desenvolvimento local
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    rollupOptions: {
-      output: {
-        manualChunks: undefined,
-      },
-    },
-  },
-  publicDir: 'public',
-}));
+      '@': '/src',
+      '@/components': '/src/components',
+      '@/hooks': '/src/hooks',
+      '@/lib': '/src/lib',
+      '@/pages': '/src/pages'
+    }
+  }
+});

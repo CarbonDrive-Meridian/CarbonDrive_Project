@@ -29,7 +29,7 @@ interface CarbonEmissionData {
   fuelSaved: number; // em litros
 }
 
-// Tipos de transporte e suas emissões (kg CO2 por km)
+// Enum para modos de transporte
 enum TransportMode {
   CAR = 'car',
   BICYCLE = 'bicycle',
@@ -38,34 +38,31 @@ enum TransportMode {
   MOTORCYCLE = 'motorcycle'
 }
 
-const EMISSION_FACTORS = {
-  [TransportMode.CAR]: 0.21, // kg CO2/km
-  [TransportMode.BICYCLE]: 0.0, // kg CO2/km
-  [TransportMode.WALKING]: 0.0, // kg CO2/km
-  [TransportMode.PUBLIC_TRANSPORT]: 0.089, // kg CO2/km
-  [TransportMode.MOTORCYCLE]: 0.113 // kg CO2/km
-};
-
+// Classe principal para gerenciar cálculos de distância e emissões
 class DistanceMatrixService {
   private loader: Loader;
   private service: google.maps.DistanceMatrixService | null = null;
+  private isInitialized = false;
 
   constructor() {
     this.loader = new Loader({
       apiKey: GOOGLE_MAPS_API_KEY,
       version: 'weekly',
-      libraries: ['geometry']
+      libraries: ['geometry', 'places']
     });
   }
 
-  // Inicializar o serviço
+  // Inicializar o serviço Google Maps
   async initialize(): Promise<void> {
+    if (this.isInitialized) return;
+
     try {
       await this.loader.load();
       this.service = new google.maps.DistanceMatrixService();
+      this.isInitialized = true;
     } catch (error) {
-      console.error('Erro ao inicializar Distance Matrix Service:', error);
-      throw error;
+      console.error('Erro ao carregar Google Maps API:', error);
+      throw new Error('Falha ao inicializar o serviço de mapas');
     }
   }
 
@@ -73,7 +70,7 @@ class DistanceMatrixService {
   async calculateDistance(
     origin: Location,
     destination: Location,
-    travelMode: google.maps.TravelMode = google.maps.TravelMode.DRIVING
+    travelMode: string = 'DRIVING'
   ): Promise<DistanceMatrixResult> {
     if (!this.service) {
       await this.initialize();
@@ -83,8 +80,8 @@ class DistanceMatrixService {
       this.service!.getDistanceMatrix({
         origins: [{ lat: origin.lat, lng: origin.lng }],
         destinations: [{ lat: destination.lat, lng: destination.lng }],
-        travelMode: travelMode,
-        unitSystem: google.maps.UnitSystem.METRIC,
+        travelMode: travelMode as any,
+        unitSystem: 0, // METRIC
         avoidHighways: false,
         avoidTolls: false
       }, (response, status) => {
@@ -108,61 +105,61 @@ class DistanceMatrixService {
   }
 
   // Calcular emissões de carbono baseado no modo de transporte
-  calculateCarbonEmissions(
-    distance: number, // em metros
-    transportMode: TransportMode
-  ): CarbonEmissionData {
-    const distanceKm = distance / 1000;
-    const emissionFactor = EMISSION_FACTORS[transportMode];
-    const carEmissionFactor = EMISSION_FACTORS[TransportMode.CAR];
+  calculateCarbonEmissions(distanceInMeters: number, transportMode: TransportMode): CarbonEmissionData {
+    const distanceInKm = distanceInMeters / 1000;
     
-    const carbonEmitted = distanceKm * emissionFactor;
-    const carCarbonEmitted = distanceKm * carEmissionFactor;
-    const carbonSaved = Math.max(0, carCarbonEmitted - carbonEmitted);
-    
-    // Cálculo aproximado de combustível economizado (1L gasolina ≈ 2.3kg CO2)
-    const fuelSaved = carbonSaved / 2.3;
+    // Fatores de emissão (kg CO2 por km)
+    const emissionFactors = {
+      [TransportMode.CAR]: 0.21, // Carro médio
+      [TransportMode.BICYCLE]: 0, // Bicicleta não emite CO2
+      [TransportMode.WALKING]: 0, // Caminhada não emite CO2
+      [TransportMode.PUBLIC_TRANSPORT]: 0.089, // Transporte público (média)
+      [TransportMode.MOTORCYCLE]: 0.113 // Motocicleta
+    };
+
+    // Consumo de combustível (litros por km)
+    const fuelConsumption = {
+      [TransportMode.CAR]: 0.08, // 12.5 km/l
+      [TransportMode.BICYCLE]: 0,
+      [TransportMode.WALKING]: 0,
+      [TransportMode.PUBLIC_TRANSPORT]: 0.035, // Estimativa
+      [TransportMode.MOTORCYCLE]: 0.03 // 33 km/l
+    };
+
+    const carbonEmitted = distanceInKm * emissionFactors[transportMode];
+    const carbonSaved = distanceInKm * (emissionFactors[TransportMode.CAR] - emissionFactors[transportMode]);
+    const fuelSaved = distanceInKm * (fuelConsumption[TransportMode.CAR] - fuelConsumption[transportMode]);
 
     return {
       transportMode,
-      distance,
-      carbonEmitted,
-      carbonSaved,
-      fuelSaved
+      distance: distanceInMeters,
+      carbonEmitted: Math.max(0, carbonEmitted),
+      carbonSaved: Math.max(0, carbonSaved),
+      fuelSaved: Math.max(0, fuelSaved)
     };
   }
 
-  // Calcular rota completa com múltiplos pontos
+  // Calcular emissões para uma rota com múltiplos pontos
   async calculateRouteEmissions(
     waypoints: Location[],
-    transportMode: TransportMode = TransportMode.CAR
-  ): Promise<{
-    totalDistance: number;
-    totalDuration: number;
-    totalCarbonEmitted: number;
-    totalCarbonSaved: number;
-    totalFuelSaved: number;
-    segments: Array<{
-      from: Location;
-      to: Location;
-      distance: DistanceMatrixResult;
-      emissions: CarbonEmissionData;
-    }>;
-  }> {
-    const segments = [];
+    transportMode: TransportMode
+  ): Promise<CarbonEmissionData> {
+    if (waypoints.length < 2) {
+      throw new Error('É necessário pelo menos 2 pontos para calcular uma rota');
+    }
+
     let totalDistance = 0;
-    let totalDuration = 0;
     let totalCarbonEmitted = 0;
     let totalCarbonSaved = 0;
     let totalFuelSaved = 0;
 
     // Mapear modo de transporte para Google Maps TravelMode
     const travelModeMap = {
-      [TransportMode.CAR]: google.maps.TravelMode.DRIVING,
-      [TransportMode.BICYCLE]: google.maps.TravelMode.BICYCLING,
-      [TransportMode.WALKING]: google.maps.TravelMode.WALKING,
-      [TransportMode.PUBLIC_TRANSPORT]: google.maps.TravelMode.TRANSIT,
-      [TransportMode.MOTORCYCLE]: google.maps.TravelMode.DRIVING
+      [TransportMode.CAR]: 'DRIVING',
+      [TransportMode.BICYCLE]: 'BICYCLING',
+      [TransportMode.WALKING]: 'WALKING',
+      [TransportMode.PUBLIC_TRANSPORT]: 'TRANSIT',
+      [TransportMode.MOTORCYCLE]: 'DRIVING'
     };
 
     const travelMode = travelModeMap[transportMode];
@@ -173,58 +170,49 @@ class DistanceMatrixService {
 
       try {
         const distanceResult = await this.calculateDistance(from, to, travelMode);
-        const emissions = this.calculateCarbonEmissions(
-          distanceResult.distance.value,
-          transportMode
-        );
-
-        segments.push({
-          from,
-          to,
-          distance: distanceResult,
-          emissions
-        });
+        const emissions = this.calculateCarbonEmissions(distanceResult.distance.value, transportMode);
 
         totalDistance += distanceResult.distance.value;
-        totalDuration += distanceResult.duration.value;
         totalCarbonEmitted += emissions.carbonEmitted;
         totalCarbonSaved += emissions.carbonSaved;
         totalFuelSaved += emissions.fuelSaved;
-
       } catch (error) {
-        console.error(`Erro ao calcular segmento ${i}:`, error);
+        console.error(`Erro ao calcular segmento ${i + 1}:`, error);
         throw error;
       }
     }
 
     return {
-      totalDistance,
-      totalDuration,
-      totalCarbonEmitted,
-      totalCarbonSaved,
-      totalFuelSaved,
-      segments
+      transportMode,
+      distance: totalDistance,
+      carbonEmitted: totalCarbonEmitted,
+      carbonSaved: totalCarbonSaved,
+      fuelSaved: totalFuelSaved
     };
   }
 
-  // Comparar diferentes modos de transporte para a mesma rota
+  // Comparar diferentes modos de transporte para uma rota
   async compareTransportModes(
     origin: Location,
     destination: Location
   ): Promise<{
-    [key in TransportMode]?: {
-      distance: DistanceMatrixResult;
+    [key in TransportMode]: {
       emissions: CarbonEmissionData;
       available: boolean;
     };
   }> {
-    const results: any = {};
+    const results: {
+      [key in TransportMode]: {
+        emissions: CarbonEmissionData;
+        available: boolean;
+      };
+    } = {} as any;
     
     const modes = [
-      { mode: TransportMode.CAR, travelMode: google.maps.TravelMode.DRIVING },
-      { mode: TransportMode.BICYCLE, travelMode: google.maps.TravelMode.BICYCLING },
-      { mode: TransportMode.WALKING, travelMode: google.maps.TravelMode.WALKING },
-      { mode: TransportMode.PUBLIC_TRANSPORT, travelMode: google.maps.TravelMode.TRANSIT }
+      { mode: TransportMode.CAR, travelMode: 'DRIVING' },
+      { mode: TransportMode.BICYCLE, travelMode: 'BICYCLING' },
+      { mode: TransportMode.WALKING, travelMode: 'WALKING' },
+      { mode: TransportMode.PUBLIC_TRANSPORT, travelMode: 'TRANSIT' }
     ];
 
     for (const { mode, travelMode } of modes) {
@@ -233,15 +221,19 @@ class DistanceMatrixService {
         const emissions = this.calculateCarbonEmissions(distance.distance.value, mode);
         
         results[mode] = {
-          distance,
           emissions,
           available: true
         };
       } catch (error) {
         console.warn(`Modo ${mode} não disponível:`, error);
         results[mode] = {
-          distance: null,
-          emissions: null,
+          emissions: {
+            transportMode: mode,
+            distance: 0,
+            carbonEmitted: 0,
+            carbonSaved: 0,
+            fuelSaved: 0
+          },
           available: false
         };
       }
@@ -250,13 +242,13 @@ class DistanceMatrixService {
     return results;
   }
 
-  // Converter coordenadas para endereço (geocoding reverso)
+  // Converter coordenadas em endereço
   async getAddressFromCoordinates(location: Location): Promise<string> {
     if (!this.service) {
       await this.initialize();
     }
 
-    const geocoder = new google.maps.Geocoder();
+    const geocoder = new (window as any).google.maps.Geocoder();
     
     return new Promise((resolve, reject) => {
       geocoder.geocode(

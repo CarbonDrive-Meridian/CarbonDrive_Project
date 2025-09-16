@@ -16,6 +16,22 @@ interface UserProfile {
   pix_key: string | null;
 }
 
+interface AxiosError {
+  response?: {
+    status: number;
+    data?: {
+      error?: string;
+    };
+  };
+  code?: string;
+  message?: string;
+}
+
+// Type guard para verificar se o erro é do tipo AxiosError
+const isAxiosError = (error: unknown): error is AxiosError => {
+  return typeof error === 'object' && error !== null;
+}
+
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -72,11 +88,11 @@ const Profile = () => {
         
         // Atualizar localStorage com dados mais recentes
         localStorage.setItem('user', JSON.stringify(userData));
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Erro ao carregar perfil:", error);
         
         // Tratamento específico para diferentes tipos de erro
-        if (error.response?.status === 401) {
+        if (isAxiosError(error) && error.response?.status === 401) {
           toast({
             title: "Sessão expirada",
             description: "Sua sessão expirou. Faça login novamente.",
@@ -85,7 +101,7 @@ const Profile = () => {
           localStorage.removeItem('jwt');
           localStorage.removeItem('user');
           navigate('/login');
-        } else if (error.response?.status === 404) {
+        } else if (isAxiosError(error) && error.response?.status === 404) {
           toast({
             title: "Usuário não encontrado",
             description: "Perfil não encontrado. Tente fazer login novamente.",
@@ -95,7 +111,7 @@ const Profile = () => {
         } else {
           toast({
             title: "Erro ao carregar perfil",
-            description: error.response?.data?.error || "Não foi possível carregar os dados do perfil.",
+            description: isAxiosError(error) ? error.response?.data?.error || "Não foi possível carregar os dados do perfil." : "Não foi possível carregar os dados do perfil.",
             variant: "destructive",
           });
         }
@@ -149,11 +165,11 @@ const Profile = () => {
         description: "Suas informações foram salvas com sucesso.",
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao atualizar perfil:", error);
       
       // Tratamento específico para diferentes tipos de erro
-      if (error.response?.status === 401) {
+      if (isAxiosError(error) && error.response?.status === 401) {
         toast({
           title: "Sessão expirada",
           description: "Sua sessão expirou. Faça login novamente.",
@@ -161,27 +177,27 @@ const Profile = () => {
         });
         localStorage.removeItem('jwt');
         navigate('/login');
-      } else if (error.response?.status === 404) {
+      } else if (isAxiosError(error) && error.response?.status === 404) {
         toast({
           title: "Usuário não encontrado",
           description: "Perfil não encontrado. Tente fazer login novamente.",
           variant: "destructive",
         });
         navigate('/login');
-      } else if (error.response?.status === 400) {
+      } else if (isAxiosError(error) && error.response?.status === 400) {
         toast({
           title: "Dados inválidos",
-          description: error.response?.data?.error || "Verifique os dados informados.",
+          description: isAxiosError(error) ? error.response?.data?.error || "Verifique os dados informados." : "Verifique os dados informados.",
           variant: "destructive",
         });
-      } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+      } else if (isAxiosError(error) && (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error'))) {
         toast({
           title: "Erro de conexão",
           description: "Verifique sua conexão com a internet e tente novamente.",
           variant: "destructive",
         });
       } else {
-        const errorMessage = error.response?.data?.error || "Erro ao atualizar perfil. Tente novamente.";
+        const errorMessage = isAxiosError(error) ? error.response?.data?.error || "Erro ao atualizar perfil. Tente novamente." : "Erro ao atualizar perfil. Tente novamente.";
         toast({
           title: "Erro ao salvar",
           description: errorMessage,

@@ -50,7 +50,7 @@ export const useMovementDetection = () => {
   const CDRIVE_PER_KG_CO2 = 1.0; // $CDRIVE por kg CO²
 
   // Calcular distância usando fórmula de Haversine
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const calculateDistance = useCallback((lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371000; // Raio da Terra em metros
     const dLat = toRadians(lat2 - lat1);
     const dLon = toRadians(lon2 - lon1);
@@ -60,14 +60,14 @@ export const useMovementDetection = () => {
       Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
-  };
+  }, []);
 
   const toRadians = (degrees: number): number => {
     return degrees * (Math.PI / 180);
   };
 
   // Calcular dados de movimento
-  const calculateMovement = (previous: LocationData, current: LocationData): MovementData => {
+  const calculateMovement = useCallback((previous: LocationData, current: LocationData): MovementData => {
     const timeDiff = (current.timestamp - previous.timestamp) / 1000; // segundos
     
     const distance = calculateDistance(
@@ -95,7 +95,7 @@ export const useMovementDetection = () => {
       isBraking,
       distance
     };
-  };
+  }, [BRAKE_THRESHOLD, calculateDistance]);
 
   // Processar atualização de localização
   const handleLocationUpdate = useCallback((position: GeolocationPosition) => {
@@ -154,7 +154,7 @@ export const useMovementDetection = () => {
     }
 
     previousLocation.current = currentLocation;
-  }, [toast]);
+  }, [toast, calculateMovement]);
 
   // Iniciar rastreamento
   const startTracking = useCallback(async () => {

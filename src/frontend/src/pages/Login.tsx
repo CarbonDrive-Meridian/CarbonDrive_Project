@@ -47,9 +47,11 @@ const Login = () => {
         navigate('/dashboard');
       }
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro no login:", error);
-      const errorMessage = error.response?.data?.message || "Erro ao fazer login. Tente novamente.";
+      const errorMessage = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Erro ao fazer login. Tente novamente."
+        : "Erro ao fazer login. Tente novamente.";
       toast({
         title: "Erro no Login",
         description: errorMessage,

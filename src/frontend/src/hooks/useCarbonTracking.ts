@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { distanceMatrixService, TransportMode, type Location, type CarbonEmissionData } from '@/services/distanceMatrix';
+import { distanceMatrixService, TransportMode, type Location, type CarbonEmissionData, type DistanceMatrixResult } from '@/services/distanceMatrix';
 
 interface CarbonTrackingSession {
   isActive: boolean;
@@ -25,7 +25,13 @@ interface CarbonTrackingHook {
   stopTracking: () => Promise<CarbonTrackingSession>;
   updateLocation: (location: Location) => void;
   calculateRouteEmissions: () => Promise<void>;
-  compareTransportModes: (destination: Location) => Promise<any>;
+  compareTransportModes: (destination: Location) => Promise<{
+    [key in TransportMode]?: {
+      distance: DistanceMatrixResult;
+      emissions: CarbonEmissionData;
+      available: boolean;
+    };
+  }>;
   resetSession: () => void;
 }
 
@@ -92,6 +98,43 @@ export const useCarbonTracking = (): CarbonTrackingHook => {
     });
   };
 
+  // Atualizar localização atual
+  const updateLocation = useCallback((newLocation: Location) => {
+    setSession(prevSession => {
+      if (!prevSession.isActive) return prevSession;
+
+      // Verificar se a nova localização é significativamente diferente
+      const lastLocation = prevSession.currentLocation;
+      if (lastLocation) {
+        const distance = calculateDistance(lastLocation, newLocation);
+        // Só adicionar se a distância for maior que 10 metros
+        if (distance < 10) return prevSession;
+      }
+
+      return {
+        ...prevSession,
+        currentLocation: newLocation,
+        waypoints: [...prevSession.waypoints, newLocation]
+      };
+    });
+  }, []);
+
+  // Calcular distância entre dois pontos (fórmula de Haversine)
+  const calculateDistance = (point1: Location, point2: Location): number => {
+    const R = 6371e3; // Raio da Terra em metros
+    const φ1 = point1.lat * Math.PI / 180;
+    const φ2 = point2.lat * Math.PI / 180;
+    const Δφ = (point2.lat - point1.lat) * Math.PI / 180;
+    const Δλ = (point2.lng - point1.lng) * Math.PI / 180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
+  };
+
   // Iniciar rastreamento
   const startTracking = useCallback(async (transportMode: TransportMode) => {
     try {
@@ -138,7 +181,7 @@ export const useCarbonTracking = (): CarbonTrackingHook => {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
       console.error('Erro ao iniciar rastreamento:', err);
     }
-  }, []);
+  }, [updateLocation]);
 
   // Parar rastreamento
   const stopTracking = useCallback(async (): Promise<CarbonTrackingSession> => {
@@ -183,43 +226,6 @@ export const useCarbonTracking = (): CarbonTrackingHook => {
       throw err;
     }
   }, [session, watchId]);
-
-  // Atualizar localização atual
-  const updateLocation = useCallback((newLocation: Location) => {
-    setSession(prevSession => {
-      if (!prevSession.isActive) return prevSession;
-
-      // Verificar se a nova localização é significativamente diferente
-      const lastLocation = prevSession.currentLocation;
-      if (lastLocation) {
-        const distance = calculateDistance(lastLocation, newLocation);
-        // Só adicionar se a distância for maior que 10 metros
-        if (distance < 10) return prevSession;
-      }
-
-      return {
-        ...prevSession,
-        currentLocation: newLocation,
-        waypoints: [...prevSession.waypoints, newLocation]
-      };
-    });
-  }, []);
-
-  // Calcular distância entre dois pontos (fórmula de Haversine)
-  const calculateDistance = (point1: Location, point2: Location): number => {
-    const R = 6371e3; // Raio da Terra em metros
-    const φ1 = point1.lat * Math.PI / 180;
-    const φ2 = point2.lat * Math.PI / 180;
-    const Δφ = (point2.lat - point1.lat) * Math.PI / 180;
-    const Δλ = (point2.lng - point1.lng) * Math.PI / 180;
-
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-    return R * c;
-  };
 
   // Calcular emissões da rota atual
   const calculateRouteEmissions = useCallback(async () => {
