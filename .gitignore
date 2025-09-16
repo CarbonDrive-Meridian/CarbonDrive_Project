@@ -35,3 +35,11 @@ test-results/
 __pycache__/
 *.pyc
 .venv/
+
+.env
+stablish_trustline.js
+yarn.lock
+fetch_js.js
+package.json
+package-lock.json
+/node_modules
