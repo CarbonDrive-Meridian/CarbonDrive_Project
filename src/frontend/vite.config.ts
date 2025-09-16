@@ -5,6 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: "https://github.com/CarbonDrive-Meridian/CarbonDrive_Project.git", // A URL do seu repositório
   server: {
     host: "::",
     port: 8080,
