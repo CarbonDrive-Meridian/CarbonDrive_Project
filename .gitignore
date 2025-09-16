@@ -5,3 +5,5 @@ fetch_js.js
 package.json
 package-lock.json
 /node_modules
+src/backend/database.sqlite
+src/backend/node_modules
