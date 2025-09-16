@@ -1,24 +1,51 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Leaf, User, Mail, Lock } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { authService, apiUtils } from "@/services/api";
+import { toast } from "sonner";
 
 const Register = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
+    pix_key: "",
     userType: "Motorista", // Novo estado para o tipo de usuário
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Registration data:", formData);
-    // Here would be API integration
+    setIsLoading(true);
+
+    try {
+      const registerData = {
+        email: formData.email,
+        password: formData.password,
+        pix_key: formData.pix_key || undefined,
+      };
+
+      const response = await authService.register(registerData);
+      
+      // Salvar token e dados do usuário
+      apiUtils.setAuthToken(response.token);
+      apiUtils.setUserData(response.user);
+      
+      toast.success("Cadastro realizado com sucesso!");
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Erro no cadastro:", error);
+      const errorMessage = error.response?.data?.error || "Erro ao fazer cadastro. Tente novamente.";
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

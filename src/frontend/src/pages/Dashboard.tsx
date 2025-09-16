@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // Adicione o useNavigate
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -14,7 +14,7 @@ import {
   Car
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import axios from "axios"; // Importe o axios
+import { motoristaService } from "@/services/api";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -94,37 +94,23 @@ const Dashboard = () => {
   };
 
   const handlePixExchange = async () => {
-    const token = localStorage.getItem('jwt');
-    if (!token) {
-      toast({
-        title: "Erro de autenticação",
-        description: "Você precisa estar logado para fazer a troca.",
-        variant: "destructive",
-      });
-      navigate('/login');
-      return;
-    }
-
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/motorista/trocar-cdr-por-pix`,
-        { amount: driverBalance }, // Ou o valor específico que o usuário deseja trocar
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await motoristaService.trocarCdrPorPix(driverBalance);
 
-      const { newBalance, pixValue } = response.data;
-      setDriverBalance(newBalance);
+      // Atualizar o saldo local (em uma aplicação real, você buscaria do servidor)
+      setDriverBalance(0);
 
       toast({
         title: "Troca Realizada!",
-        description: `R$ ${pixValue.toFixed(2)} foi enviado para sua chave PIX`,
+        description: `R$ ${response.amount_brl.toFixed(2)} foi enviado para sua chave PIX`,
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro na troca PIX:", error);
+      const errorMessage = error.response?.data?.error || "Erro na transação. Tente novamente.";
       toast({
         title: "Erro na Troca",
-        description: "Saldo insuficiente ou erro na transação. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     }

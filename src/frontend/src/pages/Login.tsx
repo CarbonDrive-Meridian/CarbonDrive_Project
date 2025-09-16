@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Leaf, Mail, Lock } from "lucide-react";
+import { authService, apiUtils } from "@/services/api";
+import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,13 +14,28 @@ const Login = () => {
     email: "",
     password: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login data:", formData);
-    // Here would be API integration
-    // For demo purposes, navigate to dashboard
-    navigate("/dashboard");
+    setIsLoading(true);
+
+    try {
+      const response = await authService.login(formData);
+      
+      // Salvar token e dados do usuário
+      apiUtils.setAuthToken(response.token);
+      apiUtils.setUserData(response.user);
+      
+      toast.success("Login realizado com sucesso!");
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Erro no login:", error);
+      const errorMessage = error.response?.data?.error || "Erro ao fazer login. Tente novamente.";
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,8 +105,14 @@ const Login = () => {
                 />
               </div>
 
-              <Button type="submit" variant="carbon" size="eco" className="w-full">
-                Entrar
+              <Button 
+                type="submit" 
+                variant="carbon" 
+                size="eco" 
+                className="w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? "Entrando..." : "Entrar"}
               </Button>
             </form>
 

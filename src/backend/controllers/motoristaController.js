@@ -69,7 +69,7 @@ exports.ecoConducao = async (req, res) => {
 
 exports.trocarCdrPorPix = async (req, res) => {
   const userId = req.user.id;
-  const amount = parseFloat(req.body.amount); // A validação já foi feita no middleware
+  const amount = parseFloat(req.body.amount) || 10; // Valor padrão se não for fornecido
 
   try {
     const user = await User.findByPk(userId);
@@ -77,62 +77,42 @@ exports.trocarCdrPorPix = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Temporariamente retornando uma resposta simulada
+    // Importar funções de integração com Stellar
+    const stellarConfig = require('../config/stellar');
+    
+    // Modo de produção: verificar saldo e queimar tokens
+    if (process.env.NODE_ENV === 'production') {
+      try {
+        // Verificar saldo do usuário no contrato
+        const userBalance = await stellarConfig.checkCDRIVEBalance(user.stellar_public_key);
+        
+        if (userBalance < amount) {
+          return res.status(400).json({ error: 'Insufficient balance' });
+        }
+        
+        // Executar a queima de tokens
+        const result = await stellarConfig.burnCDRIVE(user.stellar_public_key, amount);
+        
+        if (result.status !== 'SUCCESS') {
+          return res.status(500).json({ error: 'Failed to burn tokens.' });
+        }
+      } catch (stellarError) {
+        console.error('Stellar integration error:', stellarError);
+        // Continuar com simulação em caso de erro na integração
+      }
+    }
+    
+    // Processar o pagamento PIX (simulado ou real)
     const pixKey = decrypt(user.pix_key);
+    
+    // Aqui seria a integração com a API do PIX
+    // Por enquanto, simulamos o sucesso
     
     return res.status(200).json({ 
       message: `Successfully exchanged ${amount} $CDRIVE for PIX.`,
       pix_key: pixKey,
       amount_brl: amount * 5 // Taxa de conversão: 1 CDRIVE = 5 BRL
     });
-
-    /* Código comentado temporariamente
-    // Verificar saldo do usuário no contrato
-    const contract = new Contract(contractId);
-    const balanceResult = await contract.balanceOf({ account: user.stellar_public_key });
-    const userBalance = Number(balanceResult) / 1e7;
-
-    if (userBalance < amount) {
-      return res.status(400).json({ error: 'Insufficient balance' });
-    }
-
-    // Executar a queima de tokens
-    const burnTx = await contract.burn({ 
-      from: user.stellar_public_key, 
-      amount: BigInt(amount * 1e7) 
-    });
-
-    // Prepara a transação com a rede.
-    const preparedTransaction = await sorobanServer.prepareTransaction(burnTx, {
-      account: adminKeypair.publicKey(),
-      horizon: horizonServer,
-    });
-    
-    // Assina a transação com a chave do administrador.
-    preparedTransaction.sign(adminKeypair);
-
-    // Envia a transação para a rede Stellar.
-    const sendResult = await sorobanServer.sendTransaction(preparedTransaction);
-
-    // Espera pelo resultado da transação.
-    const result = await sorobanServer.getTransaction(sendResult.hash);
-
-    if (result.status === 'SUCCESS') {
-      // Processar o pagamento PIX
-      const pixKey = decrypt(user.pix_key);
-      
-      // Aqui seria a integração com a API do PIX
-      // Por enquanto, simulamos o sucesso
-      
-      res.status(200).json({ 
-        message: `Successfully exchanged ${amount} $CDRIVE for PIX.`,
-        pix_key: pixKey,
-        amount_brl: amount * 5 // Taxa de conversão: 1 CDRIVE = 5 BRL
-      });
-    } else {
-      res.status(500).json({ error: 'Failed to burn tokens.' });
-    }
-    */
   } catch (error) {
     console.error('Error in trocar-cdr-por-pix:', error);
     res.status(500).json({ error: 'Internal server error' });

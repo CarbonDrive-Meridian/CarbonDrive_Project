@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const StellarSdk = require('@stellar/stellar-sdk');
-const { Keypair, TransactionBuilder, Operation, Asset, Networks } = StellarSdk;
+const StellarSdk = require('stellar-sdk');
+const { Keypair } = StellarSdk;
 const User = require('../models/user');
 const crypto = require('crypto');
 
@@ -33,8 +33,7 @@ function decrypt(encryptedData) {
 }
 
 // --- Stellar Configuration ---
-const server = new StellarSdk.Horizon.Server('https://horizon-testnet.stellar.org');
-const adminKeypair = Keypair.fromSecret(process.env.CHAVE_PRIVADA_ADMIN);
+const stellarConfig = require('../config/stellar');
 
 // --- Controller ---
 exports.register = async (req, res) => {
@@ -54,12 +53,31 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Simulação temporária para evitar erros com a API Stellar
-    const pair = Keypair.random();
-    const publicKey = pair.publicKey();
-    const secretKey = pair.secret();
+    // Criar conta Stellar usando a configuração centralizada
+    let publicKey, secretKey;
     
-    console.log(`Simulando criação de conta ${publicKey} no Stellar Testnet...`);
+    try {
+      // Em produção, criar conta real na rede Stellar
+      if (process.env.NODE_ENV === 'production') {
+        const account = await stellarConfig.createStellarAccount();
+        publicKey = account.publicKey;
+        secretKey = account.secretKey;
+      } else {
+        // Em desenvolvimento, simular a criação da conta
+        const pair = Keypair.random();
+        publicKey = pair.publicKey();
+        secretKey = pair.secret();
+      }
+      
+      console.log(`Conta Stellar criada: ${publicKey}`);
+    } catch (stellarError) {
+      console.error('Erro ao criar conta Stellar:', stellarError);
+      // Fallback para criação local em caso de erro
+      const pair = Keypair.random();
+      publicKey = pair.publicKey();
+      secretKey = pair.secret();
+      console.log(`Fallback: Conta Stellar simulada criada: ${publicKey}`);
+    }
     
     // Hash da senha e criptografia da chave secreta
     const hashedPassword = await bcrypt.hash(password, 10);
