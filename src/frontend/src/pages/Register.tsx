@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Leaf, Mail, Lock, User, CreditCard, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
+import { Leaf, Mail, Lock, User, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
 import api from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,7 +21,6 @@ const Register = () => {
     password: "",
     confirmPassword: "",
     user_type: "",
-    pix_key: "",
   });
 
   // Validações de senha
@@ -43,8 +42,8 @@ const Register = () => {
     // Validações do frontend
     if (!isPasswordValid) {
       toast({
-        title: "Senha inválida",
-        description: "Por favor, atenda a todos os requisitos de senha.",
+        title: "Invalid password",
+      description: "Please meet all password requirements.",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -54,7 +53,7 @@ const Register = () => {
     if (!formData.user_type) {
       toast({
         title: "Tipo de usuário obrigatório",
-        description: "Por favor, selecione se você é motorista ou empresa.",
+        description: "Please select whether you are a driver or company.",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -67,7 +66,6 @@ const Register = () => {
         email: formData.email,
         password: formData.password,
         user_type: formData.user_type,
-        pix_key: formData.pix_key,
       });
 
       const { token } = response.data;
@@ -75,7 +73,7 @@ const Register = () => {
 
       toast({
         title: "Cadastro realizado com sucesso!",
-        description: "Bem-vindo ao CarbonDrive! Você será redirecionado em instantes.",
+        description: "Welcome to CarbonDrive! You will be redirected shortly.",
       });
 
       // Redireciona baseado no tipo de usuário
@@ -87,7 +85,7 @@ const Register = () => {
 
     } catch (error: any) {
       console.error("Erro no cadastro:", error);
-      const errorMessage = error.response?.data?.error || "Erro ao criar conta. Tente novamente.";
+      const errorMessage = error.response?.data?.error || "Error creating account. Please try again.";
       toast({
         title: "Erro no Cadastro",
         description: errorMessage,
@@ -132,16 +130,16 @@ const Register = () => {
             <h1 className="text-3xl font-bold gradient-text">CarbonDrive</h1>
           </div>
           <p className="text-muted-foreground">
-            Junte-se à revolução da condução sustentável
+            Join the sustainable driving revolution
           </p>
         </div>
 
         {/* Register Form */}
         <Card className="carbon-card">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Criar Conta</CardTitle>
+            <CardTitle className="text-2xl">Create Your Account</CardTitle>
             <CardDescription>
-              Comece a ganhar recompensas por dirigir de forma sustentável
+              Join CarbonDrive and start earning rewards for eco-friendly driving
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -149,13 +147,13 @@ const Register = () => {
               <div className="space-y-2">
                 <Label htmlFor="name" className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  Nome Completo
+                  Full Name
                 </Label>
                 <Input
                   id="name"
                   name="name"
                   type="text"
-                  placeholder="Digite seu nome completo"
+                  placeholder="Enter your full name"
                   value={formData.name}
                   onChange={handleChange}
                   required
@@ -166,13 +164,13 @@ const Register = () => {
               <div className="space-y-2">
                 <Label htmlFor="email" className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  E-mail
+                  Email
                 </Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="Digite seu e-mail"
+                  placeholder="Enter your email"
                   value={formData.email}
                   onChange={handleChange}
                   required
@@ -183,46 +181,30 @@ const Register = () => {
               <div className="space-y-2">
                 <Label htmlFor="user_type" className="flex items-center gap-2">
                   <User className="h-4 w-4" />
-                  Tipo de Usuário
+                  User Type
                 </Label>
                 <Select onValueChange={handleSelectChange} required>
                   <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Selecione o tipo de usuário" />
+                    <SelectValue placeholder="Select user type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="driver">Motorista</SelectItem>
-                    <SelectItem value="company">Empresa</SelectItem>
+                    <SelectItem value="driver">Driver</SelectItem>
+                    <SelectItem value="company">Company</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="pix_key" className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  Chave PIX (opcional)
-                </Label>
-                <Input
-                  id="pix_key"
-                  name="pix_key"
-                  type="text"
-                  placeholder="Digite sua chave PIX"
-                  value={formData.pix_key}
-                  onChange={handleChange}
-                  className="h-12"
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="password" className="flex items-center gap-2">
                   <Lock className="h-4 w-4" />
-                  Senha
+                  Password
                 </Label>
                 <div className="relative">
                   <Input
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Digite sua senha"
+                    placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleChange}
                     required
@@ -241,39 +223,39 @@ const Register = () => {
                   </button>
                 </div>
 
-                {/* Validações de senha */}
+                {/* Password validations */}
                  {formData.password && (
                    <div className="space-y-2 mt-3 p-3 bg-muted/30 rounded-lg">
-                     <p className="text-sm font-medium text-muted-foreground">Requisitos da senha:</p>
+                     <p className="text-sm font-medium text-muted-foreground">Password requirements:</p>
                      <div className="space-y-1">
                        <div className="flex items-center gap-2 text-sm">
                          <ValidationIcon isValid={passwordValidations.minLength} />
                          <span className={passwordValidations.minLength ? "text-green-600" : "text-red-600"}>
-                           Mínimo 4 caracteres
+                           Minimum 4 characters
                          </span>
                        </div>
                        <div className="flex items-center gap-2 text-sm">
                          <ValidationIcon isValid={passwordValidations.maxLength} />
                          <span className={passwordValidations.maxLength ? "text-green-600" : "text-red-600"}>
-                           Máximo 8 caracteres
+                           Maximum 8 characters
                          </span>
                        </div>
                        <div className="flex items-center gap-2 text-sm">
                          <ValidationIcon isValid={passwordValidations.hasUpperCase} />
                          <span className={passwordValidations.hasUpperCase ? "text-green-600" : "text-red-600"}>
-                           Pelo menos uma letra maiúscula
+                           At least one uppercase letter
                          </span>
                        </div>
                        <div className="flex items-center gap-2 text-sm">
                          <ValidationIcon isValid={passwordValidations.hasLowerCase} />
                          <span className={passwordValidations.hasLowerCase ? "text-green-600" : "text-red-600"}>
-                           Pelo menos uma letra minúscula
+                           At least one lowercase letter
                          </span>
                        </div>
                        <div className="flex items-center gap-2 text-sm">
                          <ValidationIcon isValid={passwordValidations.hasNumber} />
                          <span className={passwordValidations.hasNumber ? "text-green-600" : "text-red-600"}>
-                           Pelo menos um número (0-9)
+                           At least one number
                          </span>
                        </div>
                      </div>
@@ -284,14 +266,14 @@ const Register = () => {
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="flex items-center gap-2">
                   <Lock className="h-4 w-4" />
-                  Confirmar Senha
+                  Confirm Password
                 </Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Confirme sua senha"
+                    placeholder="Confirm your password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     required
@@ -310,12 +292,12 @@ const Register = () => {
                   </button>
                 </div>
 
-                {/* Validação de confirmação de senha */}
+                {/* Password confirmation validation */}
                 {formData.confirmPassword && (
                   <div className="flex items-center gap-2 text-sm mt-2">
                     <ValidationIcon isValid={passwordValidations.passwordsMatch} />
                     <span className={passwordValidations.passwordsMatch ? "text-green-600" : "text-red-600"}>
-                      {passwordValidations.passwordsMatch ? "Senhas coincidem" : "Senhas não coincidem"}
+                      {passwordValidations.passwordsMatch ? "Passwords match" : "Passwords don't match"}
                     </span>
                   </div>
                 )}
@@ -328,15 +310,15 @@ const Register = () => {
                 className="w-full"
                 disabled={isLoading || !isPasswordValid}
               >
-                {isLoading ? "Criando conta..." : "Criar Conta"}
+                {isLoading ? "Creating account..." : "Create Account"}
               </Button>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
-                Já tem uma conta?{" "}
+                Already have an account?{" "}
                 <Link to="/login" className="text-accent hover:text-accent/90 font-medium">
-                  Faça login
+                  Sign in
                 </Link>
               </p>
             </div>

@@ -1,30 +1,30 @@
 // Configuração para integração com a rede Stellar e contratos Soroban
-const StellarSdk = require('stellar-sdk');
+const StellarSdk = require('@stellar/stellar-sdk');
 const { Keypair } = StellarSdk;
 
-// Tratamento para o módulo soroban-client que pode não estar disponível
+// Tratamento para o módulo @stellar/stellar-sdk que deve estar disponível
 let Contract;
 try {
-  const sorobanClient = require('soroban-client');
-  Contract = sorobanClient.Contract;
+  Contract = StellarSdk.Contract;
 } catch (error) {
-  console.warn('Módulo soroban-client não encontrado, usando simulação para contratos');
-  // Simulação básica do Contract para desenvolvimento
-  Contract = class MockContract {
-    constructor(id) {
-      this.id = id;
+  console.warn('Contract não encontrado no @stellar/stellar-sdk, usando simulação para contratos');
+  Contract = class {
+    constructor(contractId) {
+      this.contractId = contractId;
     }
     
-    async balanceOf() {
-      return BigInt(1000000000); // Valor simulado
+    mint(params) {
+      return {
+        toXDR: () => 'simulated_xdr',
+        operations: [{ type: 'mint', ...params }]
+      };
     }
     
-    async mint() {
-      return { hash: 'simulado-' + Date.now() };
-    }
-    
-    async burn() {
-      return { hash: 'simulado-' + Date.now() };
+    burn(params) {
+      return {
+        toXDR: () => 'simulated_xdr',
+        operations: [{ type: 'burn', ...params }]
+      };
     }
   };
 }

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -11,10 +11,11 @@ import {
   ChevronDown,
   Clock,
   Bolt,
-  Car
+  Car,
+  Settings
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import api from "@/services/api"; // Importe a instância do Axios que criamos
+import api from "@/services/api"; // Keep your import
         
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -25,43 +26,70 @@ const Dashboard = () => {
   const [isJourneyActive, setIsJourneyActive] = useState(false);
   const [sessionData, setSessionData] = useState({
     carbonSaved: 0,
-    sessionTokens: 0,
-    kilometersDriven: 0,
+    tokensEarned: 0,
+    kilometersDriven: 0
   });
 
-  // Cotação: 1 $CDRIVE = R$ 0.20 (Exemplo B2C)
-  const cdriveToBrlcRate = 0.20;
+  // State for dynamic dollar rate
+  const [dollarRate, setDollarRate] = useState(5.50); // Default value
+  const [cdriveToBrlcRate, setCdriveToBrlcRate] = useState(0.275); // 1 $CDRIVE = 0.05 USD convertido para BRL
+  
+  // Fetch dollar rate when component loads
+  useEffect(() => {
+    const fetchDollarRate = async () => {
+      try {
+        const response = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
+        const data = await response.json();
+        if (data.USDBRL && data.USDBRL.bid) {
+          const rate = parseFloat(data.USDBRL.bid);
+          setDollarRate(rate);
+          setCdriveToBrlcRate(rate * 0.05); // 1 $CDRIVE = 0.05 USD = (rate * 0.05) BRL
+        }
+      } catch (error) {
+        console.warn('Erro ao buscar cotação do dólar:', error);
+        // Keep default values in case of error
+      }
+    };
+    
+    fetchDollarRate();
+    // Update exchange rate every 5 minutes
+    const interval = setInterval(fetchDollarRate, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // Transações de exemplo, serão substituídas por dados reais da API
+  // Rate: 1 $CDRIVE = R$ 0.20 (B2C Example)
+  // Centralized conversion settings
+
+  // Sample transactions, will be replaced by real API data
   const [transactions] = useState([
-    { id: 1, date: "15/09/2024", time: "14:30", description: "Eco-condução - Rota Centro", amount: 8.5 },
-    { id: 2, date: "15/09/2024", time: "12:15", description: "Eco-condução - Rota Norte", amount: 7.0 },
-    { id: 3, date: "14/09/2024", time: "18:45", description: "Troca PIX", amount: -50.0 },
-    { id: 4, date: "14/09/2024", time: "16:20", description: "Eco-condução - Rota Sul", amount: 9.2 },
+    { id: 1, date: "15/09/2024", time: "14:30", description: "Eco-driving - Downtown Route", amount: 8.5 },
+    { id: 2, date: "15/09/2024", time: "12:15", description: "Eco-driving - North Route", amount: 7.0 },
+    { id: 3, date: "14/09/2024", time: "18:45", description: "PIX Exchange", amount: -50.0 },
+    { id: 4, date: "14/09/2024", time: "16:20", description: "Eco-driving - South Route", amount: 9.2 },
   ]);
 
   const handleEcoSimulation = async () => {
-    // Obter o token de autenticação
+    // Get authentication token
     const token = localStorage.getItem('jwt');
     if (!token) {
       toast({
-        title: "Erro de autenticação",
-        description: "Você precisa estar logado para iniciar uma jornada.",
+        title: "Authentication Error",
+        description: "You need to be logged in to start a journey.",
         variant: "destructive",
       });
-      navigate('/login'); // Redireciona para o login se não houver token
+      navigate('/login'); // Redirect to login if no token
       return;
     }
 
     if (!isJourneyActive) {
-      // INICIAR a jornada
+      // START the journey
       setIsJourneyActive(true);
       toast({
-        title: "Jornada Iniciada!",
-        description: "Agora estamos monitorando sua condução.",
+        title: "Journey Started!",
+        description: "We are now monitoring your driving.",
       });
     } else {
-      // FINALIZAR a jornada e chamar a API para calcular ganhos
+      // END the journey and call API to calculate earnings
       try {
         const response = await api.post(
           `/motorista/eco-conducao`,
@@ -70,21 +98,25 @@ const Dashboard = () => {
 
         const { carbonSaved, sessionTokens, kilometersDriven } = response.data;
 
-        // Atualiza os estados com dados reais da API
-        setDriverBalance(prev => prev + sessionTokens);
-        setSessionData({ carbonSaved, sessionTokens, kilometersDriven });
+        // Update states with real API data
+        setDriverBalance(prev => prev + (sessionTokens || 0));
+        setSessionData({
+          carbonSaved: carbonSaved || 0,
+          tokensEarned: sessionTokens || 0,
+          kilometersDriven: kilometersDriven || 0
+        });
         setIsJourneyActive(false);
 
         toast({
-          title: "Jornada Finalizada!",
-          description: `Você economizou ${carbonSaved.toFixed(2)} kg de carbono e ganhou ${sessionTokens.toFixed(2)} $CDRIVE.`,
+          title: "Journey Completed!",
+          description: `You saved ${carbonSaved?.toFixed(2) || 0}kg of CO² and earned ${sessionTokens?.toFixed(2) || 0} $CDRIVE!`,
         });
 
       } catch (error) {
-        console.error("Erro ao finalizar jornada:", error);
+        console.error("Error completing journey:", error);
         toast({
-          title: "Erro na Jornada",
-          description: "Não foi possível calcular seus ganhos. Tente novamente.",
+          title: "Journey Error",
+          description: "Could not calculate your earnings. Please try again.",
           variant: "destructive",
         });
         setIsJourneyActive(false);
@@ -96,22 +128,22 @@ const Dashboard = () => {
     try {
       const response = await api.post(
         `/motorista/trocar-cdr-por-pix`,
-        { amount: driverBalance }, // Ou o valor específico que o usuário deseja trocar
+        { amount: driverBalance }, // Or the specific amount the user wants to exchange
       );
 
-      // Atualizar o saldo local (em uma aplicação real, você buscaria do servidor)
+      // Update local balance (in a real app, you would fetch from server)
       setDriverBalance(0);
 
       toast({
-        title: "Troca Realizada!",
-        description: `R$ ${response.amount_brl.toFixed(2)} foi enviado para sua chave PIX`,
+        title: "Exchange Completed!",
+        description: `R$ ${response.data.amount_brl.toFixed(2)} was sent to your PIX key`,
       });
 
     } catch (error: any) {
-      console.error("Erro na troca PIX:", error);
-      const errorMessage = error.response?.data?.error || "Erro na transação. Tente novamente.";
+      console.error("PIX exchange error:", error);
+      const errorMessage = error.response?.data?.error || "Transaction error. Please try again.";
       toast({
-        title: "Erro na Troca",
+        title: "Exchange Error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -129,15 +161,15 @@ const Dashboard = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold gradient-text">CarbonDrive</h1>
-              <p className="text-sm text-muted-foreground">Condução Sustentável</p>
+              <p className="text-sm text-muted-foreground">Sustainable Driving</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
+            <Link to="/profile" className="flex items-center gap-2 hover:bg-muted px-3 py-2 rounded-lg transition-colors">
               <User className="h-5 w-5 text-muted-foreground" />
               <span className="font-medium">João Silva</span>
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            </div>
+              <Settings className="h-4 w-4 text-muted-foreground" />
+            </Link>
           </div>
         </div>
       </header>
@@ -149,7 +181,7 @@ const Dashboard = () => {
           <CardContent className="p-8">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <p className="text-primary-foreground/80 text-sm mb-2">Acumule tokens</p>
+                <p className="text-primary-foreground/80 text-sm mb-2">Earn tokens for sustainable driving</p>
                 <div className="space-y-2">
                   <div className="text-4xl font-bold">
                     {driverBalance.toFixed(1)} $CDRIVE
@@ -157,12 +189,15 @@ const Dashboard = () => {
                   <div className="text-primary-foreground/90 text-lg">
                     = R$ {(driverBalance * cdriveToBrlcRate).toFixed(2)}
                   </div>
+                  <div className="text-primary-foreground/70 text-sm">
+                    1kg CO² = 1 $CDRIVE = R$ {cdriveToBrlcRate.toFixed(3)} (1 $CDRIVE = 0.05 USD)
+                  </div>
                 </div>
               </div>
               <div className="text-right">
                 <div className="flex items-center gap-1 text-accent">
                   <TrendingUp className="h-4 w-4" />
-                  <span className="font-semibold">+{dailyEarnings.toFixed(1)} hoje</span>
+                  <span className="font-semibold">+{dailyEarnings.toFixed(1)} today</span>
                 </div>
               </div>
             </div>
@@ -178,7 +213,7 @@ const Dashboard = () => {
             className="h-16 text-lg"
           >
             <Zap className="h-6 w-6" />
-            {isJourneyActive ? "Finalizar Jornada" : "Iniciar Jornada Ecológica"}
+            {isJourneyActive ? "End Journey" : "Start Eco Journey"}
           </Button>
           
           <Button 
@@ -188,40 +223,41 @@ const Dashboard = () => {
             className="h-16 text-lg"
           >
             <DollarSign className="h-6 w-6" />
-            Trocar por Reais (Pix)
+            Exchange to BRL (PIX)
           </Button>
         </div>
 
-        {/* Resumo da Jornada (condicional) */}
+        {/* Journey Summary (conditional) */}
         {isJourneyActive ? (
           <div className="flex items-center justify-center p-6 bg-green-100 rounded-lg shadow-inner">
             <Bolt className="h-6 w-6 text-green-600 mr-3 animate-pulse" />
-            <span className="text-green-800 text-lg font-medium">Sua jornada está ativa... Dirija ecologicamente!</span>
+            <span className="text-green-800 text-lg font-medium">Your journey is active... Drive eco-friendly!</span>
           </div>
         ) : (
-          (sessionData.sessionTokens > 0) && (
+          (sessionData.tokensEarned > 0) && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-accent">Resumo da sua Jornada</CardTitle>
+                <CardTitle className="text-xl font-bold text-accent">Your Journey Summary</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <p className="text-muted-foreground flex items-center gap-2">
-                    <Leaf className="h-5 w-5 text-green-500" /> Carbono Economizado
+                    <Leaf className="h-5 w-5 text-green-500" /> Carbon Saved
                   </p>
                   <p className="text-3xl font-bold">{sessionData.carbonSaved.toFixed(2)} kg</p>
+                  <p className="text-sm text-muted-foreground">= {sessionData.carbonSaved.toFixed(2)} $CDRIVE</p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-muted-foreground flex items-center gap-2">
-                    <Car className="h-5 w-5 text-blue-500" /> KM Percorridos
+                    <Car className="h-5 w-5 text-blue-500" /> KM Traveled
                   </p>
                   <p className="text-3xl font-bold">{sessionData.kilometersDriven.toFixed(1)} km</p>
                 </div>
                 <div className="space-y-2">
                   <p className="text-muted-foreground flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-yellow-500" /> $CDRIVE Ganhos
+                    <DollarSign className="h-5 w-5 text-yellow-500" /> $CDRIVE Earnings
                   </p>
-                  <p className="text-3xl font-bold text-accent">{sessionData.sessionTokens.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-accent">{sessionData.tokensEarned.toFixed(2)}</p>
                 </div>
               </CardContent>
             </Card>
@@ -233,7 +269,7 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Histórico de Transações
+              Transaction History
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -264,5 +300,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
+  
 export default Dashboard;

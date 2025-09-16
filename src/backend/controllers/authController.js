@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const StellarSdk = require('stellar-sdk');
+const StellarSdk = require('@stellar/stellar-sdk');
 const { Keypair } = StellarSdk;
 const User = require('../models/user');
 const crypto = require('crypto');
@@ -47,10 +47,18 @@ exports.register = async (req, res) => {
     const email = req.body.email || '';
     const password = req.body.password || '';
     const pix_key = req.body.pix_key || '';
+    const name = req.body.name || '';
+    const user_type = req.body.user_type || '';
     
     // Verificar se os campos obrigatórios estão presentes
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Verificar se o email já existe
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(409).json({ error: 'Email already registered' });
     }
 
     // Criar conta Stellar usando a configuração centralizada
@@ -89,7 +97,9 @@ exports.register = async (req, res) => {
       password_hash: hashedPassword,
       stellar_public_key: publicKey,
       stellar_secret_key_encrypted: encryptedSecretKey,
-      pix_key: pix_key ? encrypt(pix_key) : null
+      pix_key: pix_key ? encrypt(pix_key) : null,
+      name: name || null,
+      user_type: user_type || null
     });
 
     // Gerar token JWT
@@ -162,3 +172,98 @@ exports.login = async (req, res) => {
 
 // Export decrypt for other controllers
 exports.decrypt = decrypt;
+
+// Buscar dados do perfil do usuário
+exports.getProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const user = await User.findByPk(userId, {
+      attributes: ['id', 'email', 'name', 'user_type', 'pix_key']
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Descriptografar chave PIX se existir
+    let pixKey = null;
+    if (user.pix_key) {
+      try {
+        pixKey = decrypt(user.pix_key);
+      } catch (error) {
+        console.error('Erro ao descriptografar chave PIX:', error);
+      }
+    }
+    
+    res.json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      user_type: user.user_type,
+      pix_key: pixKey
+    });
+    
+  } catch (error) {
+    console.error('Erro ao buscar perfil:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Atualizar dados do perfil do usuário
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { name, pix_key } = req.body;
+    
+    const user = await User.findByPk(userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Preparar dados para atualização
+    const updateData = {};
+    
+    if (name !== undefined) {
+      updateData.name = name;
+    }
+    
+    if (pix_key !== undefined) {
+      updateData.pix_key = pix_key ? encrypt(pix_key) : null;
+    }
+    
+    // Atualizar usuário
+    await user.update(updateData);
+    
+    // Retornar dados atualizados (sem dados sensíveis)
+    const updatedUser = await User.findByPk(userId, {
+      attributes: ['id', 'email', 'name', 'user_type', 'pix_key']
+    });
+    
+    // Descriptografar chave PIX para retorno
+    let pixKey = null;
+    if (updatedUser.pix_key) {
+      try {
+        pixKey = decrypt(updatedUser.pix_key);
+      } catch (error) {
+        console.error('Erro ao descriptografar chave PIX:', error);
+      }
+    }
+    
+    res.json({
+      message: 'Profile updated successfully',
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        user_type: updatedUser.user_type,
+        pix_key: pixKey
+      }
+    });
+    
+  } catch (error) {
+    console.error('Erro ao atualizar perfil:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};

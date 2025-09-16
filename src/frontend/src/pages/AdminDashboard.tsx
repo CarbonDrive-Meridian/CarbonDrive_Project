@@ -11,7 +11,32 @@ const AdminDashboard = () => {
   const [inventoryBalance, setInventoryBalance] = useState(1500);
   const [purchaseQuantity, setPurchaseQuantity] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
-  const [cdriveToBrlcRate] = useState(0.50);
+  // State for dynamic dollar exchange rate
+  const [dollarRate, setDollarRate] = useState(5.50); // Default value
+  const [cdriveToBrlcRate, setCdriveToBrlcRate] = useState(0.275); // 1 $CDRIVE = 0.05 USD converted to BRL
+  
+  // Fetch dollar exchange rate when component loads
+  useEffect(() => {
+    const fetchDollarRate = async () => {
+      try {
+        const response = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
+        const data = await response.json();
+        if (data.USDBRL && data.USDBRL.bid) {
+          const rate = parseFloat(data.USDBRL.bid);
+          setDollarRate(rate);
+          setCdriveToBrlcRate(rate * 0.05); // 1 $CDRIVE = 0.05 USD = (rate * 0.05) BRL
+        }
+      } catch (error) {
+        console.warn('Error fetching dollar exchange rate:', error);
+        // Keep default values in case of error
+      }
+    };
+    
+    fetchDollarRate();
+    // Update exchange rate every 5 minutes
+    const interval = setInterval(fetchDollarRate, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const cost = purchaseQuantity * cdriveToBrlcRate;
@@ -20,21 +45,21 @@ const AdminDashboard = () => {
 
   const handleSellToCompany = async () => {
     try {
-      // Usa a instância 'api' para fazer a requisição
+      // Use the 'api' instance to make the request
       await api.post('/admin/vender-lote-empresas', { quantity: purchaseQuantity });
 
       setInventoryBalance(prevBalance => prevBalance - purchaseQuantity);
       setPurchaseQuantity(0);
 
       toast({
-        title: "Venda Realizada!",
-        description: `Lote de ${purchaseQuantity} $CDRIVE vendido por R$ ${totalCost.toFixed(2)}.`,
+        title: "Sale Completed!",
+        description: `Batch of ${purchaseQuantity} $CDRIVE sold for R$ ${totalCost.toFixed(2)}.`,
       });
     } catch (error) {
-      console.error("Erro ao vender lote:", error);
-      const errorMessage = error.response?.data?.message || "Não foi possível vender o lote. Tente novamente.";
+      console.error("Error selling batch:", error);
+      const errorMessage = error.response?.data?.message || "Could not sell the batch. Please try again.";
       toast({
-        title: "Erro na Venda",
+        title: "Sale Error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -51,24 +76,24 @@ const AdminDashboard = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold gradient-text">CarbonDrive</h1>
-            <p className="text-sm text-muted-foreground">Painel Administrativo</p>
+            <p className="text-sm text-muted-foreground">Administrative Panel</p>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-6 py-8 space-y-8">
-        {/* Inventory Card (exibe saldo total e valor) */}
-        <Card className="bg-primary text-primary-foreground overflow-hidden">
-          <CardContent className="p-8">
-            <div className="flex items-center justify-between">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Package className="h-8 w-8 text-primary-foreground/80" />
-                  <h3 className="text-xl font-semibold text-primary-foreground/90">
-                    Inventário de $CDRIVE
-                  </h3>
-                </div>
+        <main className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+          {/* Inventory Card (displays total balance and value) */}
+          <Card className="bg-primary text-primary-foreground overflow-hidden">
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Package className="h-8 w-8 text-primary-foreground/80" />
+                    <h3 className="text-xl font-semibold text-primary-foreground/90">
+                      $CDRIVE Inventory
+                    </h3>
+                  </div>
                 <div className="space-y-2">
                   <div className="text-5xl font-bold">
                     {inventoryBalance.toLocaleString()} $CDRIVE
@@ -88,29 +113,29 @@ const AdminDashboard = () => {
         </Card>
 
         {/* Sales Interface */}
-        <Card className="p-6">
-          <CardHeader>
-            <CardTitle>Vender Créditos para Empresa</CardTitle>
-            <CardDescription>
-              Informe a quantidade de $CDRIVE que deseja vender.
-            </CardDescription>
-          </CardHeader>
+          <Card className="p-6">
+            <CardHeader>
+              <CardTitle>Sell Credits to Company</CardTitle>
+              <CardDescription>
+                Enter the amount of $CDRIVE you want to sell.
+              </CardDescription>
+            </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
               <div className="flex-grow">
                 <Input
                   type="number"
-                  placeholder="Quantidade a vender"
+                  placeholder="Amount to sell"
                   value={purchaseQuantity === 0 ? "" : purchaseQuantity}
                   onChange={(e) => setPurchaseQuantity(Number(e.target.value))}
                   min="0"
                   max={inventoryBalance}
                 />
               </div>
-              <p className="text-muted-foreground">x R$ {cdriveToBrlcRate.toFixed(2)}</p>
+              <p className="text-muted-foreground">x R$ {cdriveToBrlcRate.toFixed(3)} (1 $CDRIVE = 0.05 USD)</p>
             </div>
             <div className="flex items-center justify-between font-bold text-lg">
-              <span>Valor a Receber:</span>
+              <span>Amount to Receive:</span>
               <span>R$ {totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             </div>
             <Button
@@ -119,7 +144,7 @@ const AdminDashboard = () => {
               className="w-full h-12"
             >
               <DollarSign className="h-5 w-5 mr-2" />
-              Confirmar Venda
+              Confirm Sale
             </Button>
           </CardContent>
         </Card>

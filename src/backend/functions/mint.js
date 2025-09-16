@@ -1,5 +1,5 @@
-import { SorobanRpc, Contract, TransactionBuilder, Networks, Keypair, Address, nativeToScVal } from '@stellar/stellar-sdk';
-import 'dotenv/config.js';
+const { SorobanRpc, Contract, TransactionBuilder, Networks, Keypair, Address, nativeToScVal } = require('@stellar/stellar-sdk');
+require('dotenv/config');
 
 const ADMIN_SECRET = process.env.CHAVE_PRIVADA_ADMIN;
 const CONTRACT_ID = process.env.CONTRACT_ID;

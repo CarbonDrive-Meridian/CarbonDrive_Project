@@ -75,16 +75,16 @@ const Login = () => {
             <h1 className="text-3xl font-bold gradient-text">CarbonDrive</h1>
           </div>
           <p className="text-muted-foreground">
-            Sua plataforma de condução sustentável
+            Your sustainable driving platform
           </p>
         </div>
 
         {/* Login Form */}
         <Card className="carbon-card">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Bem-vindo de Volta</CardTitle>
+            <CardTitle className="text-2xl">Welcome Back</CardTitle>
             <CardDescription>
-              Entre em sua conta para continuar ganhando recompensas
+              Sign in to your account to continue earning rewards
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -92,13 +92,13 @@ const Login = () => {
               <div className="space-y-2">
                 <Label htmlFor="email" className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  E-mail
+                  Email
                 </Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="Digite seu e-mail"
+                  placeholder="Enter your email"
                   value={formData.email}
                   onChange={handleChange}
                   required
@@ -109,13 +109,13 @@ const Login = () => {
               <div className="space-y-2">
                 <Label htmlFor="password" className="flex items-center gap-2">
                   <Lock className="h-4 w-4" />
-                  Senha
+                  Password
                 </Label>
                 <Input
                   id="password"
                   name="password"
                   type="password"
-                  placeholder="Digite sua senha"
+                  placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
                   required
@@ -130,19 +130,19 @@ const Login = () => {
                   className="w-full"
                   disabled={isLoading}
               >
-                  {isLoading ? "Entrando..." : "Entrar"}
+                  {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 
             <div className="mt-6 text-center space-y-2">
               <p className="text-sm text-muted-foreground">
-                Não tem uma conta?{" "}
+                Don't have an account?{" "}
                 <Link to="/register" className="text-accent hover:text-accent/90 font-medium">
-                  Cadastre-se
+                  Sign up
                 </Link>
               </p>
               <Link to="#" className="text-sm text-primary hover:text-primary/90">
-                Esqueceu sua senha?
+                Forgot your password?
               </Link>
             </div>
           </CardContent>

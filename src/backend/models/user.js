@@ -8,6 +8,10 @@ const User = sequelize.define('User', {
     autoIncrement: true,
     primaryKey: true,
   },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   email: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -16,6 +20,10 @@ const User = sequelize.define('User', {
   password_hash: {
     type: DataTypes.STRING,
     allowNull: false,
+  },
+  user_type: {
+    type: DataTypes.ENUM('driver', 'company'),
+    allowNull: true,
   },
   pix_key: {
     type: DataTypes.STRING,

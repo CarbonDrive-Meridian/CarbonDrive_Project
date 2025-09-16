@@ -3,6 +3,7 @@ const { decrypt } = require('./authController');
 const StellarSdk = require('@stellar/stellar-sdk');
 const { Keypair, TransactionBuilder, Operation, Asset, Networks } = StellarSdk;
 const { Contract } = require('@stellar/stellar-sdk');
+const conversionConfig = require('../config/conversion');
 // Comentado temporariamente até resolver a importação correta
 // const SorobanRpc = StellarSdk.SorobanRpc;
 
@@ -22,14 +23,24 @@ exports.ecoConducao = async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Temporariamente retornando uma resposta simulada
+    // Simular cálculo de economia de carbono baseado na jornada
+    const kilometersDriven = Math.random() * (conversionConfig.ECO_DRIVING.MAX_KM - conversionConfig.ECO_DRIVING.MIN_KM) + conversionConfig.ECO_DRIVING.MIN_KM;
+    const fuelEfficiencyImprovement = Math.random() * (conversionConfig.ECO_DRIVING.MAX_EFFICIENCY_IMPROVEMENT - conversionConfig.ECO_DRIVING.MIN_EFFICIENCY_IMPROVEMENT) + conversionConfig.ECO_DRIVING.MIN_EFFICIENCY_IMPROVEMENT;
+    
+    // Cálculo: 1kg CO² economizado = 1 $CDRIVE
+    const carbonSaved = kilometersDriven * conversionConfig.CARBON_ECONOMY_FACTOR * fuelEfficiencyImprovement;
+    const sessionTokens = conversionConfig.calculateTokensFromCO2(carbonSaved);
+    
+    // Temporariamente retornando uma resposta simulada com dados calculados
     return res.status(200).json({ 
-      message: "Eco-condução registrada com sucesso", 
-      tokens_earned: 1.5 
+      message: "Eco-condução registrada com sucesso",
+      carbonSaved: parseFloat(carbonSaved.toFixed(2)),
+      sessionTokens: parseFloat(sessionTokens.toFixed(2)),
+      kilometersDriven: parseFloat(kilometersDriven.toFixed(1))
     });
 
     /* Código comentado temporariamente
-    const amount = 1.5; // Valor real a ser gerado
+    const amount = sessionTokens; // Valor baseado no CO² economizado
     const recipient = user.stellar_public_key;
 
     // --- Interação REAL com o Contrato Soroban ---
@@ -108,10 +119,14 @@ exports.trocarCdrPorPix = async (req, res) => {
     // Aqui seria a integração com a API do PIX
     // Por enquanto, simulamos o sucesso
     
+    // Calcular valor em reais usando cotação atual do dólar
+    const amount_brl = await conversionConfig.calculateBRLFromCDRIVE(amount);
+    
     return res.status(200).json({ 
       message: `Successfully exchanged ${amount} $CDRIVE for PIX.`,
       pix_key: pixKey,
-      amount_brl: amount * 5 // Taxa de conversão: 1 CDRIVE = 5 BRL
+      amount_brl: parseFloat(amount_brl.toFixed(2)),
+      dollar_rate: await conversionConfig.getDollarRate()
     });
   } catch (error) {
     console.error('Error in trocar-cdr-por-pix:', error);

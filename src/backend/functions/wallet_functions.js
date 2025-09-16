@@ -1,5 +1,5 @@
-import * as StellarSdk from '@stellar/stellar-sdk';
-import 'dotenv/config.js';
+const StellarSdk = require('@stellar/stellar-sdk');
+require('dotenv/config');
 
 const { Horizon, Keypair, Asset, TransactionBuilder, Operation, Networks } = StellarSdk;
 

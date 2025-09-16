@@ -24,11 +24,11 @@ const Index = () => {
             {/* Hero Text */}
             <div className="max-w-3xl mx-auto space-y-6">
               <h2 className="text-3xl lg:text-4xl font-bold text-foreground">
-                Dirija Sustentável, <span className="gradient-text">Ganhe Recompensas</span>
+                Drive Sustainable, <span className="gradient-text">Earn Rewards</span>
               </h2>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Transforme sua condução eco-responsável em tokens $CDRIVE. 
-                A primeira plataforma que recompensa motoristas por reduzir emissões de carbono.
+                Transform your eco-responsible driving into $CDRIVE tokens. 
+                The first platform that rewards drivers for reducing carbon emissions.
               </p>
             </div>
 
@@ -37,12 +37,12 @@ const Index = () => {
               <Button asChild variant="carbon" size="eco">
                 <Link to="/register">
                   <Car className="h-5 w-5" />
-                  Começar Agora
+                  Get Started Now
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
                 <Link to="/login">
-                  Já tenho conta
+                  I already have an account
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -52,15 +52,15 @@ const Index = () => {
             <div className="flex flex-wrap justify-center gap-8 pt-8">
               <div className="text-center">
                 <p className="text-2xl font-bold text-primary">1,247</p>
-                <p className="text-sm text-muted-foreground">Motoristas Ativos</p>
+                <p className="text-sm text-muted-foreground">Active Drivers</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold text-accent">2.4T</p>
-                <p className="text-sm text-muted-foreground">CO₂ Evitado</p>
+                <p className="text-sm text-muted-foreground">CO₂ Avoided</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-bold gradient-text">R$ 15.2K</p>
-                <p className="text-sm text-muted-foreground">Pagos aos Motoristas</p>
+                <p className="text-sm text-muted-foreground">Paid to Drivers</p>
               </div>
             </div>
           </div>
@@ -71,9 +71,9 @@ const Index = () => {
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold mb-4">Como Funciona o CarbonDrive</h3>
+            <h3 className="text-3xl font-bold mb-4">How CarbonDrive Works</h3>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Recompensando a boa condução, monetizando a sustentabilidade.
+              Rewarding good driving, monetizing sustainability.
             </p>
           </div>
 
@@ -83,12 +83,12 @@ const Index = () => {
                 <div className="bg-accent/10 p-3 rounded-full w-fit mx-auto mb-4">
                   <Zap className="h-8 w-8 text-accent" />
                 </div>
-                <CardTitle>Dirija Eco</CardTitle>
+                <CardTitle>Drive Eco</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-base">
-                  Use nosso app durante suas viagens para monitorar sua condução sustentável 
-                  e ganhar tokens $CDRIVE automaticamente
+                  Use our app during your trips to monitor your sustainable driving 
+                  and earn $CDRIVE tokens automatically
                 </CardDescription>
               </CardContent>
             </Card>
@@ -98,12 +98,12 @@ const Index = () => {
                 <div className="bg-primary/10 p-3 rounded-full w-fit mx-auto mb-4">
                   <TrendingUp className="h-8 w-8 text-primary" />
                 </div>
-                <CardTitle>Acumule Tokens</CardTitle>
+                <CardTitle>Accumulate Tokens</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-base">
-                  Cada quilômetro dirigido de forma sustentável gera tokens $CDRIVE 
-                  que podem ser trocados por dinheiro real via PIX
+                  Every kilometer driven sustainably generates $CDRIVE tokens 
+                  that can be exchanged for real money via PIX
                 </CardDescription>
               </CardContent>
             </Card>
@@ -113,11 +113,11 @@ const Index = () => {
                 <div className="bg-secondary/10 p-3 rounded-full w-fit mx-auto mb-4">
                   <Shield className="h-8 w-8 text-secondary" />
                 </div>
-                <CardTitle>Receba Pagamentos</CardTitle>
+                <CardTitle>Receive Payments</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-base">
-                  Transformamos o carbono que você economiza em créditos que são vendidos para empresas, financiando suas recompensas.
+                  We transform the carbon you save into credits that are sold to companies, funding your rewards.
                 </CardDescription>
               </CardContent>
             </Card>
@@ -131,14 +131,14 @@ const Index = () => {
           <div className="max-w-3xl mx-auto space-y-8">
             <div className="space-y-4">
               <Badge className="bg-accent/10 text-accent border-accent/20">
-                Pronto para começar?
+                Ready to get started?
               </Badge>
               <h3 className="text-3xl lg:text-4xl font-bold">
-                Junte-se à Revolução da <span className="gradient-text">Mobilidade Sustentável</span>
+                Join the <span className="gradient-text">Sustainable Mobility</span> Revolution
               </h3>
               <p className="text-lg text-muted-foreground">
-                Milhares de motoristas já estão ganhando dinheiro dirigindo de forma consciente. 
-                Seja o próximo a fazer parte desta mudança.
+                Thousands of drivers are already earning money by driving consciously. 
+                Be the next to be part of this change.
               </p>
             </div>
 
@@ -146,12 +146,12 @@ const Index = () => {
               <Button asChild variant="carbon" size="eco">
                 <Link to="/register">
                   <Users className="h-5 w-5" />
-                  Criar Conta Grátis
+                  Create Free Account
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
                 <Link to="/dashboard">
-                  Ver Dashboard Demo
+                  View Demo Dashboard
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
