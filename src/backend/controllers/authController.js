@@ -1,7 +1,9 @@
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { Keypair, Asset, Operation, Server, TransactionBuilder } = require('stellar-sdk');
+const StellarSdk = require('stellar-sdk');
+const { Server, Keypair } = require('stellar-sdk');
+const { TransactionBuilder, Operation, Asset } = require('stellar-sdk');
 const User = require('../models/user');
 const crypto = require('crypto');
 
