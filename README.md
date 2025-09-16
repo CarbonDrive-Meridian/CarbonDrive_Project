@@ -14,15 +14,15 @@ We use drivers’ GPS data to prove eco-driving, reward them with **$CDRIVE toke
 
 **CarbonDrive** connects drivers, companies, and blockchain in a seamless ecosystem:
 
-**- Drivers rewarded instantly:** Each eco-driving action (like smoother acceleration or fewer harsh brakes) generates a micro-reward, often worth just a few cents.
+- **Drivers rewarded instantly:** Each eco-driving action (like smoother acceleration or fewer harsh brakes) generates a micro-reward, often worth just a few cents.
 
-**- The micropayment challenge:** Traditional banks can’t process millions of $0.05 or $0.10 transactions daily — fees would exceed the payment itself. Most platforms solve this by tracking IOUs in internal databases, which are not real money and lack transparency.
+- **The micropayment challenge:** Traditional banks can’t process millions of $0.05 or $0.10 transactions daily — fees would exceed the payment itself. Most platforms solve this by tracking IOUs in internal databases, which are not real money and lack transparency.
 
-**- Our approach:** On Stellar, every micro-reward is settled directly on-chain. If a driver earns eight cents, our Soroban smart contract mints exactly 8¢ in $CDRIVE tokens to their Stellar wallet, instantly and at near-zero cost.
+- **Our approach:** On Stellar, every micro-reward is settled directly on-chain. If a driver earns eight cents, our Soroban smart contract mints exactly 8¢ in $CDRIVE tokens to their Stellar wallet, instantly and at near-zero cost.
 
-**- Cash-out made simple:** When drivers accumulate a comfortable balance (e.g., $10), they tap `Cash Out`. **CarbonDrive** aggregates their tokens and sends one PIX transfer in Reais to their bank account — turning thousands of micro-events into one macro-payment.
+- **Cash-out made simple:** When drivers accumulate a comfortable balance (e.g., $10), they tap `Cash Out`. **CarbonDrive** aggregates their tokens and sends one PIX transfer in Reais to their bank account — turning thousands of micro-events into one macro-payment.
 
-**- For companies:** The tokens collected from drivers are bundled and sold in bulk as auditable carbon credits, directly addressing corporate ESG and compliance needs.
+- **For companies:** The tokens collected from drivers are bundled and sold in bulk as auditable carbon credits, directly addressing corporate ESG and compliance needs.
 
 → **CarbonDrive** makes micropayments feasible, transparent, and scalable — turning daily driving behavior into a new class of carbon credits. 
 
